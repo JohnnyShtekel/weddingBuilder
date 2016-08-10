@@ -171,16 +171,16 @@ class GviaDailyReport(object):
                            u'תשובות לחני']]
 
     def add_col_notes_from_gvia_sheet(self):
-        query = '''SELECT NameCustomer, Text
+        query = '''SELECT NameCustomer, ISNULL(Text, '') AS Text
                       FROM dbo.tbltaxes LEFT JOIN dbo.tblCustomers
                         ON dbo.tblCustomers.KodCustomer = dbo.tbltaxes.KodCustomer'''
         query_to_db_manager = self.manager.db_service.search(query=query)
         df = pd.DataFrame.from_records(query_to_db_manager)
+        df.to_excel("tst.xlsx")
         rows = len(df.index)
         for row in range(0, rows):
             last_3_notes = u""
             notes = df['Text'][row]
-            print type(notes)
             patern = re.compile(r'\d{2}[/-]\d{2}[/-]\d{2,4}')
             list_of_notes = patern.split(notes)
             list_of_dates = re.findall(r'\d{2}[/-]\d{2}[/-]\d{2,4}', notes)
@@ -189,8 +189,7 @@ class GviaDailyReport(object):
             for note, date in zip(list_of_notes, list_of_dates):
                 last_3_notes = last_3_notes + date + note
             self.df[u'הערות מגיליון הגביה'][row] = last_3_notes
-            print last_3_notes
-            print "****************************"
+
 
 
 
@@ -299,7 +298,7 @@ class GviaDailyReport(object):
         self.add_cols_for_fees()
         self.add_col_execution_date()
         self.add_col_for_ans_for_hani()
-        # self.add_col_notes_from_gvia_sheet()
+        self.add_col_notes_from_gvia_sheet()
         self.add_col_month_tzefi()
         self.add_row_for_test()
         cond_for_negative = self.df[u'תשלום ששולם עד היום לייעוץ'] < 0

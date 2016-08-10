@@ -66,11 +66,10 @@ class GviaMonthReport(object):
             patern = re.compile(r'\d{2}[/-]\d{2}[/-]\d{2,4}')
             list_of_notes = patern.split(notes)
             list_of_dates = re.findall(r'\d{2}[/-]\d{2}[/-]\d{2,4}', notes)
-            list_of_notes = filter(lambda x : x!= u'',list_of_notes[-3:])
-            list_of_dates = filter(lambda x : x!= u'',list_of_dates[-3:])
+            list_of_notes = filter(lambda x: x != u'', list_of_notes[-3:])
+            list_of_dates = filter(lambda x: x != u'', list_of_dates[-3:])
             for note, date in zip(list_of_notes, list_of_dates):
                 last_3_notes = last_3_notes + date + note
-                # last_3_notes = u'{a}{b}{c}'.format(a=last_3_notes, b=date, c=note)
             self.df[u'הערות מגיליון הגביה'][row] = last_3_notes
 
 

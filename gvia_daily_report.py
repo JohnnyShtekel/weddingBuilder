@@ -9,7 +9,7 @@ import numpy as np
 from pandas import concat
 
 class GviaDaily(object):
-    def __init__(self):
+    def __init__(self, status):
         query = '''SELECT
           NameTeam AS [צוות],
           NameCustomer AS [שם לקוח],
@@ -62,11 +62,13 @@ class GviaDaily(object):
         ORDER BY NameTeam'''
         self.manager = EsgServiceManager()
         self.df_from_month_report = pd.read_excel('yki.xlsx', convert_float=True, sheetname=u'צפי לחודש אוגוסט 2016')
-        # self.df_from_month_report = pd.read_excel('gvia_month.xlsx', convert_float=True)
-        self.df = pd.DataFrame.from_records(self.manager.db_service.search(query=query))
-        self.rows_of_sum_positive = []
+        if status == 'report_for_hani':
+            self.df = pd.DataFrame.from_records(self.manager.db_service.search(query=query))
+        else:
+            self.df = np.nan
+        self.df_positive = np.nan
+        self.df_negative = np.nan
         self.rows_of_sum = []
-        self.last_row_of_positive = 0
 
     def remove_sum_rows(self):
         list_of_sum_rows = []
@@ -261,11 +263,11 @@ class GviaDaily(object):
             list_for_col.append(0)
         self.df[u'צפי שנותר'] = list_for_col
 
-    def order_columns(self):
-        self.df = self.df[[u'צוות', u'שם לקוח', u'סוג לקוח', u'לקוח משפטי', u'תשלום ייעוץ חודשי',
-                           u'צפי לחודש', u'תשלום ששולם עד היום לייעוץ', u'צפי שנותר',
-                           u'תשלום ששולם עד היום לגביה', u'הערות מגיליון הגביה', u'הערות משורת החיוב בסטטוס',
-                           u'תאריך לביצוע', u'אמצעי תשלום', u'תשובות לחני', u'הערות חני']]
+    def order_columns(self, df):
+        df = df[[u'צוות', u'שם לקוח', u'סוג לקוח', u'לקוח משפטי', u'תשלום ייעוץ חודשי', u'צפי לחודש',
+                 u'תשלום ששולם עד היום לייעוץ', u'צפי שנותר',u'תשלום ששולם עד היום לגביה', u'הערות מגיליון הגביה',
+                 u'הערות משורת החיוב בסטטוס', u'תאריך לביצוע', u'אמצעי תשלום', u'תשובות לחני', u'הערות חני']]
+        return df
 
 
     # def change_type_of_col_to_int(self, col_name):
@@ -360,52 +362,34 @@ class GviaDaily(object):
         new_df = concat([df, new_sum_line]).reset_index(drop=True)
         return new_df
 
-    def apply_style_on_sum_rows(self, sf):
-        for row in self.rows_of_sum_positive:
-            sf.apply_style_by_indexes(indexes_to_style=[sf.index[row]], bg_color=colors.yellow, bold=True)
-        # for row in self.rows_of_sum:
-        #     sf.apply_style_by_indexes(indexes_to_style=[sf.index[row]], bg_color=colors.yellow, bold=True)
-
-
     def change_rows_for_positive_test(self):
-        self.df[u'תשלום ששולם עד היום לייעוץ'][0] *= -1
-        self.df[u'תשלום ששולם עד היום לייעוץ'][6] *= -1
         self.df[u'תשלום ששולם עד היום לייעוץ'][67] *= -1
+        self.df[u'תשלום ששולם עד היום לייעוץ'][5] *= -1
+        self.df[u'תשלום ששולם עד היום לייעוץ'][9] *= -1
 
-    def create_positive_df(self):
-        # gvia_daily.change_rows_for_positive_test()
+    def create_positive_df(self,status):
         cond_for_negative = self.df[u'תשלום ששולם עד היום לייעוץ'] < 0
-        positive_df = self.df[~cond_for_negative]
-        positive_df = positive_df.reset_index(drop=True)
-        positive_df.to_excel("positive.xlsx")
-        positive_df = self.add_mid_sums(positive_df)
-        positive_df = self.add_total_row(positive_df)
-        self.rows_of_sum.append(self.rows_of_sum[len(self.rows_of_sum) - 1] + 1)
-        positive_df = self.calc_col_tzefi_left(positive_df)
-        self.rows_of_sum_positive = list(self.rows_of_sum)
-        self.last_row_of_positive = self.rows_of_sum_positive[len(self.rows_of_sum_positive) - 1] + 2
-        self.df = positive_df
-        positive_df.to_excel("positive1.xlsx")
-        return positive_df
+        self.df_positive = self.df[~cond_for_negative]
+        self.df_positive = self.df_positive.reset_index(drop=True)
+        self.df_positive = self.add_mid_sums(self.df_positive)
+        if status == 'report_for_hani':
+            self.df_positive = self.add_total_row(self.df_positive)
+            self.rows_of_sum.append(self.rows_of_sum[len(self.rows_of_sum) - 1] + 1)
+        self.df_positive = self.calc_col_tzefi_left(self.df_positive)
+        self.df_positive = self.order_columns(self.df_positive)
 
-    def create_negative_df(self):
+    def create_negative_df(self, status):
         self.rows_of_sum = []
         cond_for_negative = self.df[u'תשלום ששולם עד היום לייעוץ'] < 0
-        negative_df = self.df[cond_for_negative]
-        negative_df = negative_df.reset_index(drop=True)
-        negative_df.to_excel("negative.xlsx")
-        negative_df = self.add_mid_sums(negative_df)
-        negative_df = self.add_total_row(negative_df)
-        negative_df = self.calc_col_tzefi_left(negative_df)
-        self.rows_of_sum.append(self.rows_of_sum[len(self.rows_of_sum) - 1] + 1)
-        negative_df.to_excel("negative1.xlsx")
-        return negative_df
-
-
-    def cerate_separated_df(self):
-        positive_df = self.create_positive_df()
-        negative_df = self.create_negative_df()
-        self.df = concat([positive_df, negative_df]).reset_index(drop=True)
+        self.df_negative = self.df[cond_for_negative]
+        self.df_negative = self.df_negative.reset_index(drop=True)
+        if len(self.df_negative.index) != 0:
+            self.df_negative = self.add_mid_sums(self.df_negative)
+            if status == 'report_for_hani':
+                self.df_negative = self.add_total_row(self.df_negative)
+                self.rows_of_sum.append(self.rows_of_sum[len(self.rows_of_sum) - 1] + 1)
+            self.df_negative = self.calc_col_tzefi_left(self.df_negative)
+            self.df_negative = self.order_columns(self.df_negative)
 
     def create_df(self):
         self.round_col_payment_for_month_consultation()
@@ -417,20 +401,58 @@ class GviaDaily(object):
         self.add_col_notes_from_gvia_sheet()
         self.add_col_month_tzefi()
         self.add_col_notes_from_gvia_month()
-        a = self.create_positive_df()
-        # self.df = self.add_mid_sums(self.df)
-        # self.rows_of_sum.append(len(self.df))
-        # self.df = self.add_total_row(self.df)
-        self.order_columns()
+        self.df = self.order_columns(self.df)
 
-gvia_daily = GviaDaily()
+    def apply_style_on_sum_rows(self, sf):
+        for row in self.rows_of_sum:
+            sf.apply_style_by_indexes(indexes_to_style=[sf.index[row]], bg_color=colors.yellow, bold=True)
 
+    def create_separated_df(self, file_name, status):
+        self.create_positive_df(status)
+        sf_positive = StyleFrame(self.df_positive)
+        self.apply_style_on_sum_rows(sf_positive)
+        writer = StyleFrame.ExcelWriter(file_name)
+        sf_positive.to_excel(excel_writer=writer, sheet_name=u'דוח גביה יומי חיובי', right_to_left=True, row_to_add_filters=0,
+                             columns_and_rows_to_freeze='A2')
+        self.create_negative_df(status)
+        if len(self.df_negative.index) != 0:
+            sf_negative = StyleFrame(self.df_negative)
+            self.apply_style_on_sum_rows(sf_negative)
+            sf_negative.to_excel(excel_writer=writer, sheet_name=u'דוח גביה יומי שלילי', right_to_left=True, row_to_add_filters=0,
+                                 columns_and_rows_to_freeze='A2')
+        writer.save()
+
+    def create_report_for_each_team(self):
+        self.df.to_excel("df.xlsx")
+        gvia_for_teams = GviaDaily('report for teams')
+        rows = len(self.df.index)
+        team = self.df.iloc[0][u'צוות']
+        first_index = 0
+        last_index = 0
+        for r in range(0, rows):
+            if r == rows - 1:
+                last_index = r
+                gvia_for_teams.df = self.df[first_index:last_index + 1]
+                gvia_for_teams.df.reset_index(drop=True)
+                file_name = 'gvia month for {team}.xlsx'.format(team=r)
+                gvia_for_teams.create_separated_df(file_name, 'report_for_teams')
+            elif self.df[u'צוות'][r + 1] == team:
+                last_index += 1
+            else:
+                if self.df[u'צוות'][r + 1] != team:
+                    gvia_for_teams = GviaDaily('report for teams')
+                    gvia_for_teams.df = self.df[first_index:last_index + 1]
+                    gvia_for_teams.df.reset_index(drop=True)
+                    file_name = 'gvia month for {team}.xlsx'.format(team=r)
+                    gvia_for_teams.create_separated_df(file_name, 'report_for_teams')
+                    new_team = self.df[u'צוות'][r + 1]
+                    last_index += 1
+                    first_index = last_index
+                    team = new_team
+
+
+gvia_daily = GviaDaily('report_for_hani')
 gvia_daily.create_df()
-
-
-
-sf = StyleFrame(gvia_daily.df)
-gvia_daily.apply_style_on_sum_rows(sf)
-writer = StyleFrame.ExcelWriter('Gvia day report new.xlsx')
-sf.to_excel(excel_writer=writer, right_to_left=True, row_to_add_filters=0, columns_and_rows_to_freeze='A2')
-writer.save()
+gvia_daily.change_rows_for_positive_test()
+gvia_daily.create_separated_df('Gvia day report new.xlsx', 'report_for_hani')
+gvia_daily.create_report_for_each_team()

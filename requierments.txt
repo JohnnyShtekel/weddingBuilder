@@ -16,7 +16,7 @@ cssutils==1.0.1
 emails==0.5.5
 enum34==1.1.6
 esg-dal==0.1.0
-esg-service-manager==1.0.2
+esg-service-manager==1.0.8
 et-xmlfile==1.0.1
 Flask==0.10.1
 h2==2.4.0

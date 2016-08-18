@@ -61,7 +61,7 @@ class GviaDaily(object):
         WHERE CustomerStatus = 2
         ORDER BY NameTeam'''
         self.manager = EsgServiceManager()
-        self.df_from_month_report = pd.read_excel('yki.xlsx', convert_float=True, sheetname=u'צפי לחודש אוגוסט 2016')
+        self.df_from_month_report = pd.read_excel(u'תכנון הצפי לחודש אוגוסט 2016.xlsx', convert_float=True, sheetname=u'צפי לחודש אוגוסט 2016')
         if status == 'report_for_hani':
             self.df = pd.DataFrame.from_records(self.manager.db_service.search(query=query))
         else:
@@ -453,6 +453,6 @@ class GviaDaily(object):
 
 gvia_daily = GviaDaily('report_for_hani')
 gvia_daily.create_df()
-gvia_daily.change_rows_for_positive_test()
+# gvia_daily.change_rows_for_positive_test()
 gvia_daily.create_separated_df('Gvia day report new.xlsx', 'report_for_hani')
 gvia_daily.create_report_for_each_team()

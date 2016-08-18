@@ -112,7 +112,7 @@ class TotalGviaDailyReport(object):
         self.df = self.df[[u'צוות', u'גביה מרגיל', u'גביה מייעוץ', u'גביה מפרויקטלי', u'גביה כוללת']]
 
 
-a= ""
+
 gvia_teams = TotalGviaDailyReport()
 gvia_teams.add_col_team()
 gvia_teams.add_gvia_cols_for_3_kinds_of_customers()

@@ -7,7 +7,6 @@ from pandas import concat
 import re
 
 
-
 class TotalGviaDailyReport(object):
     def __init__(self):
         self.manager = EsgServiceManager()
@@ -17,13 +16,12 @@ class TotalGviaDailyReport(object):
 
 
     def add_col_team(self):
-        df = pd.read_excel('Gvia day report new.xlsx', convert_float=True, sheetname=u'דוח גביה יומי חיובי')
-        df = df[[u'צוות']]
-        df = df.drop_duplicates(u'צוות')
-        list_of_teams = df[u'צוות'].tolist()
-        # list_of_teams = [u'ברקת', u'אלמוג', u'אודם', u'פנינה', u'קריסטל', u'שוהם-שכר', u'שנהב', u'ספיר', u'טורקיז',
-        #         u'סה"כ יישום', u'מחלקת גביה']
-        self.df[u'צוות'] = list_of_teams
+        query = '''SELECT NameTeam [צוות]
+            FROM dbo.tblTeamList
+            WHERE NameTeam  NOT LIKE 'כללי'
+            ORDER BY NameTeam'''
+        q = self.manager.db_service.search(query=query)
+        self.df = pd.DataFrame.from_records(q)
 
     def get_paid_payment_for_consultation_from_excel_daily_report(self):
         df = pd.read_excel('Gvia day report new.xlsx', convert_float=True, sheetname=u'דוח גביה יומי חיובי')
@@ -86,26 +84,24 @@ class TotalGviaDailyReport(object):
           INNER JOIN dbo.tblTeamList
             ON dbo.tblCustomers.KodTeamCare = dbo.tblTeamList.KodTeamCare
             WHERE CustomerStatus = 2 AND YEAR(DateFU) = YEAR(getdate()) AND MONTH(DateFU) = MONTH(getdate())
-             AND DAY(DateFU) <= DAY(getdate())
                 ORDER BY NameTeam'''
         q = self.manager.db_service.search(query=query)
         self.df_from_sql_for_gvia_megvia_and_tzefi = pd.DataFrame.from_records(q)
-        self.df_from_sql_for_gvia_megvia_and_tzefi.to_excel("gvia megvia.xlsx")
 
     def add_col_gvia_from_gvia(self):
         df = (self.df_from_sql_for_gvia_megvia_and_tzefi.groupby('NameTeam').PaySuccessFU.sum()).reset_index()
-        df.to_excel("gvia megvia1.xlsx")
-        dict_for_consultation = df.set_index("NameTeam")["PaySuccessFU"].to_dict()
-        self.df[u'גביה מהגביה'] = np.nan
-        for index in range(0, len(self.df)):
-            if self.df.iloc[index]["NameTeam"] in dict_for_consultation.keys():
-                self.df.set_value(index, u'גביה מהגביה',
-                                  dict_for_consultation.get(self.df.iloc[index]["NameTeam"]))
+        df.to_excel("gvia megvia.xlsx")
+        # dict_for_consultation = df.set_index("NameTeam")["PaySuccessFU"].to_dict()
+        # self.df[u'גביה מהגביה'] = np.nan
+        # for index in range(0, len(self.df)):
+        #     if self.df.iloc[index]["NameTeam"] in dict_for_consultation.keys():
+        #         self.df.set_value(index, u'גביה מהגביה',
+        #                           dict_for_consultation.get(self.df.iloc[index]["NameTeam"]))
 
 
     def add_col_tzefi_from_gvia(self):
         df = (self.df_from_sql_for_gvia_megvia_and_tzefi.groupby('NameTeam').PaySuccessFUTeam.sum()).reset_index()
-        df.to_excel("gvia megvia2.xlsx")
+        df.to_excel("tzefi megvia.xlsx")
 
 
     def order_columns(self):
@@ -119,15 +115,17 @@ gvia_teams.add_gvia_cols_for_3_kinds_of_customers()
 gvia_teams.add_col_total_gvia()
 gvia_teams.order_columns()
 gvia_teams.get_df_from_sql_for_gvia_megvia_and_tzefi()
-# gvia_teams.add_col_gvia_from_gvia()
-# gvia_teams.add_col_tzefi_from_gvia()
-gvia_teams.df.to_excel("total gvia.xlsx")
+gvia_teams.add_col_gvia_from_gvia()
+gvia_teams.add_col_tzefi_from_gvia()
 
 sf = StyleFrame(gvia_teams.df)
 writer = StyleFrame.ExcelWriter("total gvia.xlsx")
 sf.to_excel(excel_writer=writer, sheet_name=u'דוח גביה יומי לפי צוותים', right_to_left=True, row_to_add_filters=0,
             columns_and_rows_to_freeze='A2')
 writer.save()
+
+
+
 
 
 

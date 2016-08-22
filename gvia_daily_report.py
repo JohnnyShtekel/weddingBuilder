@@ -11,8 +11,8 @@ from pandas import concat
 class GviaDaily(object):
     def __init__(self, status):
         query = '''SELECT
-          NameTeam AS [צוות],
-          NameCustomer AS [שם לקוח],
+          ISNULL(NameTeam, taxTeam) AS [צוות],
+          dbo.tblCustomers.NameCustomer AS [שם לקוח],
           MiddlePay AS [אמצעי תשלום],
           AgreementKind AS [סוג לקוח],
           DateFU AS [תאריך לביצוע],
@@ -58,8 +58,19 @@ class GviaDaily(object):
             ) tbltaxes
             ON
               dbo.tblCustomers.KodCustomer = tbltaxes.KodCustomer
-        WHERE CustomerStatus = 2
-        ORDER BY NameTeam'''
+          LEFT JOIN (
+                      SELECT DISTINCT
+                        NameTeam AS [taxTeam],
+                        KodCustomer,
+                        1 AS [taxsThisMonth]
+                      FROM dbo.tbltaxesPay
+                        LEFT JOIN dbo.tblTeamList
+                        ON dbo.tbltaxesPay.KodTeamCare = dbo.tblTeamList.KodTeamCare
+                      WHERE YEAR(DatePay) = YEAR(getdate()) AND MONTH(DatePay) = MONTH(getdate())
+                    ) taxesPay
+            ON taxesPay.KodCustomer = dbo.tblCustomers.KodCustomer
+        WHERE (CustomerStatus = 2 OR (CustomerStatus != 2  AND taxesPay.taxsThisMonth = 1))
+        ORDER BY [צוות]'''
         self.manager = EsgServiceManager()
         self.df_from_month_report = pd.read_excel(u'תכנון הצפי לחודש אוגוסט 2016.xlsx', convert_float=True, sheetname=u'צפי לחודש אוגוסט 2016')
         if status == 'report_for_hani':
@@ -454,4 +465,4 @@ gvia_daily = GviaDaily('report_for_hani')
 gvia_daily.create_df()
 # gvia_daily.change_rows_for_positive_test()
 gvia_daily.create_separated_df('Gvia day report new.xlsx', 'report_for_hani')
-gvia_daily.create_report_for_each_team()
+# gvia_daily.create_report_for_each_team()

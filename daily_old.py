@@ -8,9 +8,8 @@ import re
 import numpy as np
 from pandas import concat
 
-
 class GviaDaily(object):
-    def __init__(self):
+    def __init__(self, status):
         query = '''SELECT
           NameTeam AS [צוות],
           NameCustomer AS [שם לקוח],
@@ -62,10 +61,13 @@ class GviaDaily(object):
         WHERE CustomerStatus = 2
         ORDER BY NameTeam'''
         self.manager = EsgServiceManager()
-        self.df_from_month_report = pd.read_excel('yki.xlsx', convert_float=True, sheetname=u'צפי לחודש אוגוסט 2016')
-        # self.df_from_month_report = pd.read_excel('gvia_month.xlsx', convert_float=True)
-        self.df = pd.DataFrame.from_records(self.manager.db_service.search(query=query))
-        self.rows_of_sum_positive = []
+        self.df_from_month_report = pd.read_excel(u'תכנון הצפי לחודש אוגוסט 2016.xlsx', convert_float=True, sheetname=u'צפי לחודש אוגוסט 2016')
+        if status == 'report_for_hani':
+            self.df = pd.DataFrame.from_records(self.manager.db_service.search(query=query))
+        else:
+            self.df = np.nan
+        self.df_positive = np.nan
+        self.df_negative = np.nan
         self.rows_of_sum = []
 
     def remove_sum_rows(self):
@@ -139,9 +141,8 @@ class GviaDaily(object):
         df = pd.DataFrame.from_records(q)
         today = datetime.today()
         for index, row in df.iterrows():
-            if row['DatePay'] is not None and row['DatePay'][0] == today.year and row['DatePay'][1] == today.month:
-                date = datetime(row['DatePay'][0], row['DatePay'][1], row['DatePay'][2],
-                                row['DatePay'][3], row['DatePay'][4], row['DatePay'][5])
+            if row['DatePay'] is not None and row['DatePay'].year == today.year and row['DatePay'].month == today.month:
+                date = row['DatePay']
                 dates.append(date)
             else:
                 date = datetime(1920, 1, 1, 00, 00, 00)
@@ -169,7 +170,7 @@ class GviaDaily(object):
         for index in range(0, len(self.df_from_month_report)):
             if self.df_from_month_report.iloc[index][u'שם לקוח'] in dict_of_feeTeam.keys():
                 self.df_from_month_report.set_value(index, u'תשלום ששולם עד היום לייעוץ',
-                                                    math.ceil(dict_of_feeTeam.get
+                                                    (dict_of_feeTeam.get
                                                               (self.df_from_month_report.iloc[index][u'שם לקוח'])))
         dict_for_consultation = self.df_from_month_report.set_index(u'שם לקוח')[u'תשלום ששולם עד היום לייעוץ'].to_dict()
         self.df[u'תשלום ששולם עד היום לייעוץ'] = np.nan
@@ -189,8 +190,7 @@ class GviaDaily(object):
         for index in range(0, len(self.df_from_month_report)):
             if self.df_from_month_report.iloc[index][u'שם לקוח'] in dict_of_feeTax.keys():
                 self.df_from_month_report.set_value(index, u'תשלום ששולם עד היום לגביה',
-                                                    math.ceil(dict_of_feeTax.get(
-                                                        self.df_from_month_report.iloc[index][u'שם לקוח'])))
+                                  (dict_of_feeTax.get(self.df_from_month_report.iloc[index][u'שם לקוח'])))
         dict_for_gvia = self.df_from_month_report.set_index(u'שם לקוח')[u'תשלום ששולם עד היום לגביה'].to_dict()
         self.df[u'תשלום ששולם עד היום לגביה'] = np.nan
         for index in range(0, len(self.df)):
@@ -202,7 +202,7 @@ class GviaDaily(object):
         dates = []
         for index, row in self.df.iterrows():
             if row[u'תאריך לביצוע'] is not None:
-                date = datetime(row[u'תאריך לביצוע'][0], row[u'תאריך לביצוע'][1], row[u'תאריך לביצוע'][2])
+                date = row[u'תאריך לביצוע']
                 date = date.date()
                 dates.append(date)
             else:
@@ -213,6 +213,7 @@ class GviaDaily(object):
     def add_cols_for_hani(self):
         self.df[u'תשובות לחני'] = np.nan
         self.df[u'הערות חני'] = np.nan
+
 
     def add_col_notes_from_gvia_sheet(self):
         notes_for_column = []
@@ -237,31 +238,36 @@ class GviaDaily(object):
             for row1 in range(0, len(self.df_from_month_report)):
                 if self.df[u'שם לקוח'][row] == self.df_from_month_report[u'שם לקוח'][row1]:
                     self.df[u'הערות משורת החיוב בסטטוס'][row] = self.df_from_month_report[u'הערות'][row1]
-                    # dict_for_notes = self.df_from_month_report.set_index(u'שם לקוח')[u'הערות'].to_dict()
-                    # for row in range(0, len(self.df)):
-                    #     if self.df[u'שם לקוח'][row] in dict_for_notes.keys():
-                    #         self.df.set_value(row, u'הערות משורת החיוב בסטטוס',
-                    #                           dict_for_tzefi.get(self.df[u'שם לקוח'][[row]]))
+            # dict_for_notes = self.df_from_month_report.set_index(u'שם לקוח')[u'הערות'].to_dict()
+            # for row in range(0, len(self.df)):
+            #     if self.df[u'שם לקוח'][row] in dict_for_notes.keys():
+            #         self.df.set_value(row, u'הערות משורת החיוב בסטטוס',
+            #                           dict_for_tzefi.get(self.df[u'שם לקוח'][[row]]))
 
-    def add_col_tzefi_left(self, status):
+    def calc_col_tzefi_left(self, df):
+        list_for_col = []
+        rows = len(df.index)
+        for index in range(0, rows):
+            if index not in self.rows_of_sum:
+                list_for_col.append('=IF(F{row}-G{row}<0,0,F{row}-G{row})'.format(row=index + 2))
+            else:
+                list_for_col.append(df.iloc[index][u'צפי שנותר'])
+        df[u'צפי שנותר'] = list_for_col
+        return df
+
+    def add_empty_col_tzefi_left(self):
         list_for_col = []
         rows = len(self.df.index)
-        if status == 1:
-            for index in range(0, rows):
-                if index not in self.rows_of_sum:
-                    list_for_col.append('=IF(F{row}-G{row}<0,0,F{row}-G{row})'.format(row=index + 2))
-                else:
-                    list_for_col.append(self.df.iloc[index][u'צפי שנותר'])
-        else:
-            for index in range(0, rows):
-                list_for_col.append(0)
+        for index in range(0, rows):
+            list_for_col.append(0)
         self.df[u'צפי שנותר'] = list_for_col
 
-    def order_columns(self):
-        self.df = self.df[[u'צוות', u'שם לקוח', u'סוג לקוח', u'לקוח משפטי', u'תשלום ייעוץ חודשי',
-                           u'צפי לחודש', u'תשלום ששולם עד היום לייעוץ', u'צפי שנותר',
-                           u'תשלום ששולם עד היום לגביה', u'הערות מגיליון הגביה', u'הערות משורת החיוב בסטטוס',
-                           u'תאריך לביצוע', u'אמצעי תשלום', u'תשובות לחני', u'הערות חני']]
+    def order_columns(self, df):
+        df = df[[u'צוות', u'שם לקוח', u'סוג לקוח', u'לקוח משפטי', u'תשלום ייעוץ חודשי', u'צפי לחודש',
+                 u'תשלום ששולם עד היום לייעוץ', u'צפי שנותר',u'תשלום ששולם עד היום לגביה', u'הערות מגיליון הגביה',
+                 u'הערות משורת החיוב בסטטוס', u'תאריך לביצוע', u'אמצעי תשלום', u'תשובות לחני', u'הערות חני']]
+        return df
+
 
     # def change_type_of_col_to_int(self, col_name):
     #     self.df[col_name] = self.df[col_name].apply(lambda x: int(x))
@@ -274,33 +280,35 @@ class GviaDaily(object):
     #     self.change_type_of_col_to_int(u'צפי שנותר')
     #     self.change_type_of_col_to_int(u'תשלום ששולם עד היום לגביה')
 
-    def add_mid_sums(self):
-        rows = len(self.df.index)
-        team = self.df[u'צוות'][0]
+
+    def add_mid_sums(self, df):
+        rows = len(df.index)
+        team = df.iloc[0][u'צוות']
         first_index = 0
         last_index = 0
         for r in range(0, rows):
             if r == rows - 1:
-                last_index = len(self.df.index) - 1
-                self.calc_mid_sums(first_index, last_index, team)
-            if self.df[u'צוות'][r + 1] == team:
+                last_index = len(df.index) - 1
+                df = self.calc_mid_sums(df, first_index, last_index, team)
+            elif df[u'צוות'][r + 1] == team:
                 last_index += 1
             else:
-                if self.df[u'צוות'][r + 1] != team:
-                    new_team = self.df[u'צוות'][r + 1]
-                    self.calc_mid_sums(first_index, last_index, team)
+                if df[u'צוות'][r + 1] != team:
+                    new_team = df[u'צוות'][r + 1]
+                    df = self.calc_mid_sums(df, first_index, last_index, team)
                     last_index += 1
                     first_index = last_index + 1
                     team = new_team
-        self.df.sort_index()
+        df = df.sort_index()
+        return df
 
-    def calc_mid_sums(self, first_index, last_index, team):
+    def calc_mid_sums(self, df, first_index, last_index, team):
         index1 = first_index + 2
         index2 = last_index + 2
         sum_of_month_consultation = '=SUM(E{first_index}:E{last_index})'.format(first_index=index1, last_index=index2)
         sum_of_month_zefi = '=SUM(F{first_index}:F{last_index})'.format(first_index=index1, last_index=index2)
         sum_of_paid_payment_for_consultation = '=SUM(G{first_index}:G{last_index})'.format(first_index=index1,
-                                                                                           last_index=index2)
+                                                                                          last_index=index2)
         sum_of_zefi_left = '=SUM(H{first_index}:H{last_index})'.format(first_index=index1, last_index=index2)
         sum_of_paid_payment_for_gvia = '=SUM(I{first_index}:I{last_index})'.format(first_index=index1,
                                                                                    last_index=index2)
@@ -314,33 +322,30 @@ class GviaDaily(object):
                                      u'הערות מגיליון הגביה': [""], u'הערות משורת החיוב בסטטוס': [""],
                                      u'תאריך לביצוע': [""],
                                      u'אמצעי תשלום': [""],
-                                     u'תשובות לחני': [""]})
-        new_df = concat([self.df.ix[:last_index], new_sum_line, self.df.ix[last_index + 1:]]).reset_index(drop=True)
+                                     u'תשובות לחני': [""],
+                                     u'הערות חני': [""]})
+        new_df = concat([df.ix[:last_index], new_sum_line, df.ix[last_index + 1:]]).reset_index(drop=True)
         new_df.sort_index()
-        self.df = new_df
         self.rows_of_sum.append(last_index + 1)
+        return new_df
 
-    def add_total_row(self):
-        sum_of_month_consultation = '=E{r1}+E{r2}+E{r3}+E{r4}+E{r5}+E{r6}+E{r7}+E{r8}+E{r9}'.format(
-            r1=self.rows_of_sum[0] + 2, r2=self.rows_of_sum[1] + 2, r3=self.rows_of_sum[2] + 2,
-            r4=self.rows_of_sum[3] + 2, r5=self.rows_of_sum[4] + 2, r6=self.rows_of_sum[5] + 2,
-            r7=self.rows_of_sum[6] + 2, r8=self.rows_of_sum[7] + 2, r9=self.rows_of_sum[8] + 2)
-        sum_of_month_zefi = '=F{r1}+F{r2}+F{r3}+F{r4}+F{r5}+F{r6}+F{r7}+F{r8}+F{r9}'.format(
-            r1=self.rows_of_sum[0] + 2, r2=self.rows_of_sum[1] + 2, r3=self.rows_of_sum[2] + 2,
-            r4=self.rows_of_sum[3] + 2, r5=self.rows_of_sum[4] + 2, r6=self.rows_of_sum[5] + 2,
-            r7=self.rows_of_sum[6] + 2, r8=self.rows_of_sum[7] + 2, r9=self.rows_of_sum[8] + 2)
-        sum_of_paid_payment_for_consultation = '=G{r1}+G{r2}+G{r3}+G{r4}+G{r5}+G{r6}+G{r7}+G{r8}+G{r9}'.format(
-            r1=self.rows_of_sum[0] + 2, r2=self.rows_of_sum[1] + 2, r3=self.rows_of_sum[2] + 2,
-            r4=self.rows_of_sum[3] + 2, r5=self.rows_of_sum[4] + 2, r6=self.rows_of_sum[5] + 2,
-            r7=self.rows_of_sum[6] + 2, r8=self.rows_of_sum[7] + 2, r9=self.rows_of_sum[8] + 2)
-        sum_of_zefi_left = '=H{r1}+H{r2}+H{r3}+H{r4}+H{r5}+H{r6}+H{r7}+H{r8}+H{r9}'.format(
-            r1=self.rows_of_sum[0] + 2, r2=self.rows_of_sum[1] + 2, r3=self.rows_of_sum[2] + 2,
-            r4=self.rows_of_sum[3] + 2, r5=self.rows_of_sum[4] + 2, r6=self.rows_of_sum[5] + 2,
-            r7=self.rows_of_sum[6] + 2, r8=self.rows_of_sum[7] + 2, r9=self.rows_of_sum[8] + 2)
-        sum_of_paid_payment_for_gvia = '=I{r1}+I{r2}+I{r3}+I{r4}+I{r5}+I{r6}+I{r7}+I{r8}+I{r9}'.format(
-            r1=self.rows_of_sum[0] + 2, r2=self.rows_of_sum[1] + 2, r3=self.rows_of_sum[2] + 2,
-            r4=self.rows_of_sum[3] + 2, r5=self.rows_of_sum[4] + 2, r6=self.rows_of_sum[5] + 2,
-            r7=self.rows_of_sum[6] + 2, r8=self.rows_of_sum[7] + 2, r9=self.rows_of_sum[8] + 2)
+    def add_total_row(self, df):
+        sum_of_month_consultation = '='
+        sum_of_month_zefi = '='
+        sum_of_paid_payment_for_consultation = '='
+        sum_of_zefi_left = '='
+        sum_of_paid_payment_for_gvia = '='
+        for row in range(0, len(self.rows_of_sum)):
+            sum_of_month_consultation += "E" + str(self.rows_of_sum[row] + 2) + "+"
+            sum_of_month_zefi += "F" + str(self.rows_of_sum[row] + 2) + "+"
+            sum_of_paid_payment_for_consultation += "G" + str(self.rows_of_sum[row] + 2) + "+"
+            sum_of_zefi_left += "H" + str(self.rows_of_sum[row] + 2) + "+"
+            sum_of_paid_payment_for_gvia += "I" + str(self.rows_of_sum[row] + 2) + "+"
+        sum_of_month_consultation = sum_of_month_consultation[:-1]
+        sum_of_month_zefi = sum_of_month_zefi[:-1]
+        sum_of_paid_payment_for_consultation = sum_of_paid_payment_for_consultation[:-1]
+        sum_of_zefi_left = sum_of_zefi_left[:-1]
+        sum_of_paid_payment_for_gvia = sum_of_paid_payment_for_gvia[:-1]
         new_sum_line = pd.DataFrame({u'צוות': [""], u'שם לקוח': [u'סיכום לכל הצוותים:'],
                                      u'סוג לקוח': [""], u'לקוח משפטי': [""],
                                      u'תשלום ייעוץ חודשי': [sum_of_month_consultation],
@@ -351,37 +356,102 @@ class GviaDaily(object):
                                      u'הערות מגיליון הגביה': [""], u'הערות משורת החיוב בסטטוס': [""],
                                      u'תאריך לביצוע': [""],
                                      u'אמצעי תשלום': [""],
-                                     u'תשובות לחני': [""]})
-        new_df = concat([self.df, new_sum_line]).reset_index(drop=True)
-        self.df = new_df
+                                     u'תשובות לחני': [""],
+                                     u'הערות חני': [""]})
+        new_df = concat([df, new_sum_line]).reset_index(drop=True)
+        return new_df
 
-    def apply_style_on_sum_rows(self, sf):
-        for row in self.rows_of_sum:
-            sf.apply_style_by_indexes(indexes_to_style=[sf.index[row]], bg_color=colors.yellow, bold=True)
+    def change_rows_for_positive_test(self):
+        self.df[u'תשלום ששולם עד היום לייעוץ'][67] *= -1
+        self.df[u'תשלום ששולם עד היום לייעוץ'][5] *= -1
+        self.df[u'תשלום ששולם עד היום לייעוץ'][9] *= -1
+
+    def create_positive_df(self,status):
+        cond_for_negative = self.df[u'תשלום ששולם עד היום לייעוץ'] < 0
+        self.df_positive = self.df[~cond_for_negative]
+        self.df_positive = self.df_positive.reset_index(drop=True)
+        self.df_positive = self.add_mid_sums(self.df_positive)
+        if status == 'report_for_hani':
+            self.df_positive = self.add_total_row(self.df_positive)
+            self.rows_of_sum.append(self.rows_of_sum[len(self.rows_of_sum) - 1] + 1)
+        self.df_positive = self.calc_col_tzefi_left(self.df_positive)
+        self.df_positive = self.order_columns(self.df_positive)
+
+    def create_negative_df(self, status):
+        self.rows_of_sum = []
+        cond_for_negative = self.df[u'תשלום ששולם עד היום לייעוץ'] < 0
+        self.df_negative = self.df[cond_for_negative]
+        self.df_negative = self.df_negative.reset_index(drop=True)
+        if len(self.df_negative.index) != 0:
+            self.df_negative = self.add_mid_sums(self.df_negative)
+            if status == 'report_for_hani':
+                self.df_negative = self.add_total_row(self.df_negative)
+                self.rows_of_sum.append(self.rows_of_sum[len(self.rows_of_sum) - 1] + 1)
+            self.df_negative = self.calc_col_tzefi_left(self.df_negative)
+            self.df_negative = self.order_columns(self.df_negative)
 
     def create_df(self):
         self.round_col_payment_for_month_consultation()
         self.remove_sum_rows()
-        self.add_col_tzefi_left(0)
+        self.add_empty_col_tzefi_left()
         self.add_cols_for_fees()
         self.add_col_execution_date()
         self.add_cols_for_hani()
         self.add_col_notes_from_gvia_sheet()
         self.add_col_month_tzefi()
         self.add_col_notes_from_gvia_month()
-        self.add_mid_sums()
-        self.rows_of_sum.append(len(self.df))
-        self.add_total_row()
-        self.add_col_tzefi_left(1)
-        self.order_columns()
+        self.df = self.order_columns(self.df)
+
+    def apply_style_on_sum_rows(self, sf):
+        for row in self.rows_of_sum:
+            sf.apply_style_by_indexes(indexes_to_style=[sf.index[row]], bg_color=colors.yellow, bold=True)
+
+    def create_separated_df(self, file_name, status):
+        self.create_positive_df(status)
+        sf_positive = StyleFrame(self.df_positive)
+        self.apply_style_on_sum_rows(sf_positive)
+        writer = StyleFrame.ExcelWriter(file_name)
+        sf_positive.to_excel(excel_writer=writer, sheet_name=u'דוח גביה יומי חיובי', right_to_left=True, row_to_add_filters=0,
+                             columns_and_rows_to_freeze='A2')
+        self.create_negative_df(status)
+        if len(self.df_negative.index) != 0:
+            sf_negative = StyleFrame(self.df_negative)
+            self.apply_style_on_sum_rows(sf_negative)
+            sf_negative.to_excel(excel_writer=writer, sheet_name=u'דוח גביה יומי שלילי', right_to_left=True, row_to_add_filters=0,
+                                 columns_and_rows_to_freeze='A2')
+        writer.save()
+
+    def create_report_for_each_team(self):
+        self.df.to_excel("df.xlsx")
+        gvia_for_teams = GviaDaily('report for teams')
+        rows = len(self.df.index)
+        team = self.df.iloc[0][u'צוות']
+        first_index = 0
+        last_index = 0
+        for r in range(0, rows):
+            if r == rows - 1:
+                last_index = r
+                gvia_for_teams.df = self.df[first_index:last_index + 1]
+                gvia_for_teams.df.reset_index(drop=True)
+                file_name = 'gvia month for {team}.xlsx'.format(team=r)
+                gvia_for_teams.create_separated_df(file_name, 'report_for_teams')
+            elif self.df[u'צוות'][r + 1] == team:
+                last_index += 1
+            else:
+                if self.df[u'צוות'][r + 1] != team:
+                    gvia_for_teams = GviaDaily('report for teams')
+                    gvia_for_teams.df = self.df[first_index:last_index + 1]
+                    gvia_for_teams.df.reset_index(drop=True)
+                    file_name = 'gvia month for {team}.xlsx'.format(team=r)
+                    gvia_for_teams.create_separated_df(file_name, 'report_for_teams')
+                    new_team = self.df[u'צוות'][r + 1]
+                    last_index += 1
+                    first_index = last_index
+                    team = new_team
 
 
-gvia_daily = GviaDaily()
-
+gvia_daily = GviaDaily('report_for_hani')
 gvia_daily.create_df()
-
-sf = StyleFrame(gvia_daily.df)
-gvia_daily.apply_style_on_sum_rows(sf)
-writer = StyleFrame.ExcelWriter('Gvia day report new.xlsx')
-sf.to_excel(excel_writer=writer, right_to_left=True, row_to_add_filters=0, columns_and_rows_to_freeze='A2')
-writer.save()
+# gvia_daily.change_rows_for_positive_test()
+gvia_daily.create_separated_df('Gvia day report new1.xlsx', 'report_for_hani')
+gvia_daily.create_report_for_each_team()

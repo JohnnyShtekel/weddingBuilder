@@ -141,9 +141,8 @@ class GviaDaily(object):
         df = pd.DataFrame.from_records(q)
         today = datetime.today()
         for index, row in df.iterrows():
-            if row['DatePay'] is not None and row['DatePay'][0] == today.year and row['DatePay'][1] == today.month:
-                date = datetime(row['DatePay'][0], row['DatePay'][1], row['DatePay'][2],
-                                row['DatePay'][3], row['DatePay'][4], row['DatePay'][5])
+            if row['DatePay'] is not None and row['DatePay'].year == today.year and row['DatePay'].month == today.month:
+                date = row['DatePay']
                 dates.append(date)
             else:
                 date = datetime(1920, 1, 1, 00, 00, 00)
@@ -203,7 +202,7 @@ class GviaDaily(object):
         dates = []
         for index, row in self.df.iterrows():
             if row[u'תאריך לביצוע'] is not None:
-                date = datetime(row[u'תאריך לביצוע'][0], row[u'תאריך לביצוע'][1], row[u'תאריך לביצוע'][2])
+                date = row[u'תאריך לביצוע']
                 date = date.date()
                 dates.append(date)
             else:

@@ -106,13 +106,13 @@ class GviaDaily(object):
 
     def calc_month_extra_payments(self):
         month_extra_payments_list = []
-        for row in range(0, len(self.df_from_month_report)):
-            if self.df_from_month_report[u'לקוח משפטי'][row] == u'כן':
+        for row in range(0, len(self.df)):
+            if self.df[u'לקוח משפטי'][row] == u'כן':
                 month_extra_payments_list.append(0)
             else:
-                month_extra_payments_list.append(self.df_from_month_report[u'תשלום על בונוס'][row] +
-                                                 self.df_from_month_report[u'תשלומים מיוחדים'][row] +
-                                                 self.df_from_month_report[u'סכום התשלומים מעבר לאשראי'][row])
+                month_extra_payments_list.append(self.df[u'תשלום על בונוס'][row] +
+                                                 self.df[u'תשלומים מיוחדים'][row] +
+                                                 self.df[u'סכום התשלומים מעבר לאשראי'][row])
         return month_extra_payments_list
 
     def add_col_month_tzefi_from_original_month_report(self):
@@ -177,13 +177,13 @@ class GviaDaily(object):
 
     def add_col_paid_payment_for_consultation(self, df):
         dict_of_feeTeam = self.get_dict_for_fee_team(df)
-        self.df_from_month_report[u'תשלום ששולם עד היום לייעוץ'] = np.nan
-        for index in range(0, len(self.df_from_month_report)):
-            if self.df_from_month_report.iloc[index][u'שם לקוח'] in dict_of_feeTeam.keys():
-                self.df_from_month_report.set_value(index, u'תשלום ששולם עד היום לייעוץ',
-                                                    math.ceil(dict_of_feeTeam.get
-                                                              (self.df_from_month_report.iloc[index][u'שם לקוח'])))
-        dict_for_consultation = self.df_from_month_report.set_index(u'שם לקוח')[u'תשלום ששולם עד היום לייעוץ'].to_dict()
+        self.df[u'תשלום ששולם עד היום לייעוץ'] = np.nan
+        for index in range(0, len(self.df)):
+            if self.df.iloc[index][u'שם לקוח'] in dict_of_feeTeam.keys():
+                self.df.set_value(index, u'תשלום ששולם עד היום לייעוץ',
+                                                    round(dict_of_feeTeam.get
+                                                              (self.df.iloc[index][u'שם לקוח'])))
+        dict_for_consultation = self.df.set_index(u'שם לקוח')[u'תשלום ששולם עד היום לייעוץ'].to_dict()
         self.df[u'תשלום ששולם עד היום לייעוץ'] = np.nan
         for index in range(0, len(self.df)):
             if self.df.iloc[index][u'שם לקוח'] in dict_for_consultation.keys():
@@ -197,12 +197,12 @@ class GviaDaily(object):
 
     def add_col_paid_payment_for_gvia(self, df):
         dict_of_feeTax = self.get_dict_for_fee_tax(df)
-        self.df_from_month_report[u'תשלום ששולם עד היום לגביה'] = np.nan
-        for index in range(0, len(self.df_from_month_report)):
-            if self.df_from_month_report.iloc[index][u'שם לקוח'] in dict_of_feeTax.keys():
-                self.df_from_month_report.set_value(index, u'תשלום ששולם עד היום לגביה',
-                                  math.ceil(dict_of_feeTax.get(self.df_from_month_report.iloc[index][u'שם לקוח'])))
-        dict_for_gvia = self.df_from_month_report.set_index(u'שם לקוח')[u'תשלום ששולם עד היום לגביה'].to_dict()
+        self.df[u'תשלום ששולם עד היום לגביה'] = np.nan
+        for index in range(0, len(self.df)):
+            if self.df.iloc[index][u'שם לקוח'] in dict_of_feeTax.keys():
+                self.df.set_value(index, u'תשלום ששולם עד היום לגביה', round(dict_of_feeTax.get(self.
+                                                                        df.iloc[index][u'שם לקוח'])))
+        dict_for_gvia = self.df.set_index(u'שם לקוח')[u'תשלום ששולם עד היום לגביה'].to_dict()
         self.df[u'תשלום ששולם עד היום לגביה'] = np.nan
         for index in range(0, len(self.df)):
             if self.df.iloc[index][u'שם לקוח'] in dict_for_gvia.keys():
@@ -433,7 +433,6 @@ class GviaDaily(object):
         writer.save()
 
     def create_report_for_each_team(self):
-        self.df.to_excel("df.xlsx")
         gvia_for_teams = GviaDaily('report for teams')
         rows = len(self.df.index)
         team = self.df.iloc[0][u'צוות']

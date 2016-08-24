@@ -1,0 +1,50 @@
+
+.center {
+
+position: absolute;
+top: 0; left: 0; right: 0; bottom: 0;
+margin: auto;
+     display: flex;
+  /*align-items: center;*/
+  justify-content: center;
+width: 15%;
+height:65%;
+
+}
+
+
+
+
+.buttoncenter {
+
+position: absolute;
+top: 0; left: 0; right: 0; bottom: 0;
+margin: auto;
+width: 75%;
+height:180%;
+
+}
+
+
+#drop:hover * {
+    background: cornflowerblue;
+}
+
+.or{
+    font-size: x-large;
+    font-style: inherit;
+
+}
+
+.textcenter {
+
+position: absolute;
+top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+margin: auto;
+width: 50%;
+height:80%;
+
+}

@@ -9,6 +9,8 @@
     "history": "^1.17.0",
     "jsx-loader": "^0.13.2",
     "materialize-autocomplete": "^1.0.3",
+    "materialize-css": "^0.97.7",
+    "pui-react-autocomplete": "^5.3.1",
     "react": "^15.1.0",
     "react-document-title": "^2.0.2",
     "react-dom": "^15.1.0",
@@ -20,6 +22,7 @@
     "react-select": "^1.0.0-beta14",
     "react-selectize": "^2.0.3",
     "react-stormpath": "^1.2.1",
+    "react-typeahead": "^2.0.0-alpha.5",
     "rest": "^2.0.0",
     "yet-another-react-autocomplete": "^2.1.4"
   },

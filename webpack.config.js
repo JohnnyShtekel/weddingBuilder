@@ -30,6 +30,8 @@ module.exports = {
                         'babel-preset-react',
                         'babel-preset-stage-0',
                     ].map(require.resolve),
+
+
                 }
 
             }

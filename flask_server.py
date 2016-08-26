@@ -17,10 +17,10 @@ def multiple_routes(**kwargs):
 
 @app.route('/upload', methods=['POST'])
 def get_xl_file():
-    # try:
+    try:
+
          file = request.files['file']
          workerName = request.form['worker']
-         print workerName
          if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
@@ -31,8 +31,9 @@ def get_xl_file():
              return json.dumps({'error':False}), 200, {'ContentType':'application/json'}
 
 
-    # except:
-    #         return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+    except:
+            return json.dumps({'error':False}), 200, {'ContentType':'application/json'}
+
 
 
 def allowed_file(filename):

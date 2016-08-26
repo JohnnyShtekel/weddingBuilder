@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from esg_services import  EsgServiceManager
 
 class DBHandler(object):
@@ -16,12 +17,11 @@ class DBHandler(object):
                 ON tblCustomers.kodCustomer = taxs.kodCustomer
             WHERE NameCustomer LIKE '%{customer}%'
        """.format(total=total.encode('utf-8'),customer=customer)
-       # query = "UPDATE tbltaxes as a ,tblCustomers as b SET Text={} WHERE b.NameCustomer  LIKE '%{}%' ".format(total.encode('utf-8'),customer)
-       print query
-       r = self.manager.db_service.edit(query=query)
-       print r
+       self.manager.db_service.edit(query=query)
+
 
     def get_old_comment(self,customerName):
        customer = customerName.encode('utf-8')
        query = "SELECT a.Text FROM tbltaxes as a ,tblCustomers as b WHERE  b.kodCustomer = a.kodCustomer AND b.NameCustomer  LIKE '%{}%'".format(customer)
        return self.manager.db_service.search(query=query)[0]['Text']
+

@@ -68,18 +68,28 @@ import numpy as np
 # WHERE year = YEAR(getdate()) AND month = month(getdate())
 # ''')
 
-from openpyxl import load_workbook
-from openpyxl.styles import Protection
-wb = load_workbook('total gvia.xlsx')
-ws = wb.active
-for i in range(2,11):
-    ws['J{i}'.format(i=i)].number_format = '0.00%'
+# from openpyxl import load_workbook
+# from openpyxl.styles import Protection
+# wb = load_workbook('total gvia.xlsx')
+# ws = wb.active
+# for i in range(2,11):
+#     ws['J{i}'.format(i=i)].number_format = '0.00%'
+#
+#
+#
+# for column in ws.columns:
+#     for cell in column:
+#         if not cell.protection.locked:
+#             cell.protection = Protection(locked=True)
+# wb.save('total gvia.xlsx')
+# from esg_services import EsgServiceManager
+manager = EsgServiceManager()
+# print manager.db_service.search(query='select * from tblCustomers')
 
-
-
-for column in ws.columns:
-    for cell in column:
-        if not cell.protection.locked:
-            cell.protection = Protection(locked=True)
-wb.save('total gvia.xlsx')
-
+query = '''SELECT NameCustomer, feeTeam, DatePay, feeTax
+        FROM dbo.tblCustomers LEFT JOIN dbo.tbltaxesPay
+          ON dbo.tbltaxesPay.KodCustomer = dbo.tblCustomers.KodCustomer
+          WHERE tblCustomers.KodCustomer = 2044'''
+q = manager.db_service.search(query=query)
+df = pd.DataFrame.from_records(q)
+df.to_excel("tt.xlsx")

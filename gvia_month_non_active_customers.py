@@ -7,11 +7,10 @@ import re
 from openpyxl import load_workbook
 from openpyxl.styles import Protection
 import datetime
-from gvia_month_non_active_customers import GviaMonthNonActiveReport
 
 
 
-class GviaMonthReport(object):
+class GviaMonthNonActiveReport(object):
     def __init__(self, query):
         self.manager = EsgServiceManager()
         self.df = pd.DataFrame.from_records(self.manager.db_service.search(query=query))
@@ -225,10 +224,9 @@ class GviaMonthReport(object):
         WHERE CustomerStatus = 2
         AND closeCustomerDate IS NULL
         AND agreementFinish = 0
-        ORDER BY NameCustomer'''
+        ORDER BY NameCustomer, '''
         q = self.manager.db_service.search(query=query)
         df = pd.DataFrame.from_records(q)
-        df.to_excel("adi1.xlsx")
 
     def get_bonus_date(self):
         last_agreement_bonus_begin_date = self.last_agreement.bonusFirstDAteTest
@@ -271,6 +269,7 @@ class GviaMonthReport(object):
         wb = load_workbook('gvia_month.xlsx')
         ws = wb.active
         for i in range(2, len(self.df) + 2):
+            ws['F{i}'.format(i=i)].number_format = '#,###'
             ws['G{i}'.format(i=i)].number_format = '#,###'
             ws['H{i}'.format(i=i)].number_format = '#,###'
             ws['J{i}'.format(i=i)].number_format = '#,###'
@@ -283,196 +282,30 @@ class GviaMonthReport(object):
                     cell.protection = Protection(locked=True)
         wb.save('gvia_month.xlsx')
 
-query_for_gvia_month_report = '''SELECT
-  NameTeam AS [צוות],
-  NameCustomer AS [שם לקוח],
-  MiddlePay AS [אמצעי תשלום],
-  AgreementKind AS [סוג לקוח],
-  CASE WHEN proceFinished=0 THEN 'כן' ELSE '' END AS [לקוח משפטי],
-  CASE WHEN Conditions='דולר' THEN ISNULL(PayDollar, 0)*4 ELSE ISNULL(PayDollar, 0) END AS [תשלום ייעוץ חודשי],
-  ISNULL(SumBonus,0) as [תשלום על בונוס],
-  ISNULL(SumSpecial,0) as [תשלומים מיוחדים],
-  ISNULL(NumOfDebt,0) as [מספר התשלומים מעבר לאשראי],
-  ISNULL(Debt,0) as [סכום התשלומים מעבר לאשראי],
-  ISNULL(Remark,'') as [הערות],
-  ISNULL(Text, '') AS [הערות מגיליון הגביה]
-FROM
-  dbo.tblCustomers
-  LEFT JOIN
-  dbo.tblTeamList
-    ON dbo.tblCustomers.KodTeamCare = dbo.tblTeamList.KodTeamCare
-  LEFT JOIN
-  (SELECT * FROM
-    (
-      SELECT
-        IDagreement,
-        KodAgreementKind,
-        KodCustomer,
-        PayProcess,
-        PayDollar,
-        agreementFinish,
-        row_number() OVER(PARTITION BY KodCustomer ORDER BY DateNew DESC) AS orderAgreementByDateDesc
-      FROM
-        dbo.tblAgreementConditionAdvice
-    ) AS temp
-      WHERE temp.orderAgreementByDateDesc = 1) AS tblLastAgreements
-    ON dbo.tblCustomers.KodCustomer = tblLastAgreements.KodCustomer
-  LEFT JOIN tblJudicialProc
-    ON tblCustomers.KodCustomer = tblJudicialProc.kodCustomer
-  LEFT JOIN dbo.tblMiddlePay
-    ON tblLastAgreements.PayProcess = dbo.tblMiddlePay.KodMiddlePay
-  LEFT JOIN dbo.tblAgreementKind
-    ON dbo.tblAgreementKind.KodAgreementKind = tblLastAgreements.KodAgreementKind
-  LEFT JOIN (
-    SELECT DISTINCT NumR, Conditions,
-      SUM(CASE WHEN NumPay = 0 AND SumP-Pay>0 AND PayRemark LIKE '%בונוס%' THEN SumP-pay ELSE 0 END) OVER(PARTITION BY NumR) AS SumBonus,
-      SUM(CASE WHEN NumPay = 0 AND SumP-Pay>0  AND NOT PayRemark LIKE '%בונוס%' THEN SumP ELSE 0 END) OVER(PARTITION BY NumR) AS SumSpecial,
-      SUM(CASE WHEN NumPay > 0 AND SumP-Pay>0  AND DatePay IS NULL AND (GETDATE() > (CASE
-     WHEN tblAgreementConditionAdvice.shotef = 1 THEN
-       DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,
-               DateAdd(DAY,-1, Cast(CONVERT(VARCHAR(10),DATEPART(MM, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103)
-                                    + '/' + '01/' + CONVERT(VARCHAR(10),DATEPART(YYYY, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103) AS DATETIME)))
-     ELSE
-       DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,tblAgreementConditionAdvicePay.DateP)
-     END)) THEN 1 ELSE 0 END) OVER(PARTITION BY NumR) AS NumOfDebt,
-      SUM(CASE WHEN NumPay > 0 AND SumP-Pay>0  AND DatePay IS NULL AND (GETDATE() > (CASE
-     WHEN tblAgreementConditionAdvice.shotef = 1 THEN
-       DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,
-               DateAdd(DAY,-1, Cast(CONVERT(VARCHAR(10),DATEPART(MM, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103)
-                                    + '/' + '01/' + CONVERT(VARCHAR(10),DATEPART(YYYY, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103) AS DATETIME)))
-     ELSE
-       DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,tblAgreementConditionAdvicePay.DateP)
-     END) ) THEN SumP ELSE 0 END) OVER(PARTITION BY NumR) AS Debt,
-      STUFF((SELECT ', ' + tblRemarks.PayRemark AS [text()]FROM dbo.tblAgreementConditionAdvicePay tblRemarks WHERE tblRemarks.NumR = dbo.tblAgreementConditionAdvicePay.NumR AND tblRemarks.NumPay = 0 AND SumP-Pay>0 FOR XML PATH('')), 1, 1, '' ) AS Remark
-    FROM dbo.tblAgreementConditionAdvicePay
-    LEFT JOIN dbo.tblAgreementConditionAdvice
-      ON dbo.tblAgreementConditionAdvice.IDagreement = dbo.tblAgreementConditionAdvicePay.NumR
-
-
-     )AS tblSumAllPay
-    ON tblLastAgreements.IDagreement = tblSumAllPay.NumR
-  LEFT JOIN (
-    SELECT KodCustomer, Text
-    FROM tbltaxes
-    ) tbltaxes
-    ON
-      dbo.tblCustomers.KodCustomer = tbltaxes.KodCustomer
-WHERE CustomerStatus = 2
-AND closeCustomerDate IS NULL
-AND agreementFinish = 0
-ORDER BY NameTeam'''
+    def create_non_active_cutomers_gvia_month_report(self):
+        self.subtract_vat()
+        self.add_col_tzefi_for_month(0)
+        self.add_col_additional_payments_for_month(0)
+        self.add_col_tzefi_meuhad_for_month(0)
+        ######################################################
+        self.get_df_for_bonus()
+        #######################################################
+        self.set_3_last_notes()
+        self.change_type_of_sums_col_to_int()
+        self.change_type_of_col_to_int(u'מספר התשלומים מעבר לאשראי')
+        self.add_mid_sums()
+        self.rows_of_sum.append(len(self.df))
+        self.add_total_row()
+        self.add_col_tzefi_for_month(1)
+        self.add_col_additional_payments_for_month(1)
+        self.add_col_tzefi_meuhad_for_month(1)
+        self.arrange_col_order()
+        sf = StyleFrame(self.df)
+        self.apply_style_on_sum_rows(sf)
+        return sf
 
 
 
-query_for_gvia_month_non_active_report = '''SELECT
-    NameTeam AS [צוות],
-    NameCustomer AS [שם לקוח],
-    MiddlePay AS [אמצעי תשלום],
-    AgreementKind AS [סוג לקוח],
-    CASE WHEN proceFinished=0 THEN 'כן' ELSE '' END AS [לקוח משפטי],
-    CASE WHEN Conditions='דולר' THEN ISNULL(PayDollar, 0)*4 ELSE ISNULL(PayDollar, 0) END AS [תשלום ייעוץ חודשי],
-    ISNULL(SumBonus,0) as [תשלום על בונוס],
-    ISNULL(SumSpecial,0) as [תשלומים מיוחדים],
-    ISNULL(NumOfDebt,0) as [מספר התשלומים מעבר לאשראי],
-    ISNULL(Debt,0) as [סכום התשלומים מעבר לאשראי],
-    ISNULL(Remark,'') as [הערות],
-    ISNULL(Text, '') AS [הערות מגיליון הגביה]
-  FROM
-    dbo.tblCustomers
-    LEFT JOIN
-    dbo.tblTeamList
-      ON dbo.tblCustomers.KodTeamCare = dbo.tblTeamList.KodTeamCare
-    LEFT JOIN
-    (SELECT * FROM
-      (
-        SELECT
-          IDagreement,
-          KodAgreementKind,
-          KodCustomer,
-          PayProcess,
-          PayDollar,
-          agreementFinish,
-          row_number() OVER(PARTITION BY KodCustomer ORDER BY DateNew DESC) AS orderAgreementByDateDesc
-        FROM
-          dbo.tblAgreementConditionAdvice
-      ) AS temp
-        WHERE temp.orderAgreementByDateDesc = 1) AS tblLastAgreements
-      ON dbo.tblCustomers.KodCustomer = tblLastAgreements.KodCustomer
-    LEFT JOIN tblJudicialProc
-      ON tblCustomers.KodCustomer = tblJudicialProc.kodCustomer
-    LEFT JOIN dbo.tblMiddlePay
-      ON tblLastAgreements.PayProcess = dbo.tblMiddlePay.KodMiddlePay
-    LEFT JOIN dbo.tblAgreementKind
-      ON dbo.tblAgreementKind.KodAgreementKind = tblLastAgreements.KodAgreementKind
-    LEFT JOIN (
-      SELECT DISTINCT NumR, Conditions,
-        SUM(CASE WHEN NumPay = 0 AND SumP-Pay>0 AND PayRemark LIKE '%בונוס%' THEN SumP-pay ELSE 0 END) OVER(PARTITION BY NumR) AS SumBonus,
-        SUM(CASE WHEN NumPay = 0 AND SumP-Pay>0  AND NOT PayRemark LIKE '%בונוס%' THEN SumP ELSE 0 END) OVER(PARTITION BY NumR) AS SumSpecial,
-        SUM(CASE WHEN NumPay > 0 AND SumP-Pay>0  AND DatePay IS NULL AND (GETDATE() > (CASE
-       WHEN tblAgreementConditionAdvice.shotef = 1 THEN
-         DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,
-                 DateAdd(DAY,-1, Cast(CONVERT(VARCHAR(10),DATEPART(MM, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103)
-                                      + '/' + '01/' + CONVERT(VARCHAR(10),DATEPART(YYYY, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103) AS DATETIME)))
-       ELSE
-         DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,tblAgreementConditionAdvicePay.DateP)
-       END)) THEN 1 ELSE 0 END) OVER(PARTITION BY NumR) AS NumOfDebt,
-        SUM(CASE WHEN NumPay > 0 AND SumP-Pay>0  AND DatePay IS NULL AND (GETDATE() > (CASE
-       WHEN tblAgreementConditionAdvice.shotef = 1 THEN
-         DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,
-                 DateAdd(DAY,-1, Cast(CONVERT(VARCHAR(10),DATEPART(MM, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103)
-                                      + '/' + '01/' + CONVERT(VARCHAR(10),DATEPART(YYYY, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103) AS DATETIME)))
-       ELSE
-         DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,tblAgreementConditionAdvicePay.DateP)
-       END) ) THEN SumP ELSE 0 END) OVER(PARTITION BY NumR) AS Debt,
-        STUFF((SELECT ', ' + tblRemarks.PayRemark AS [text()]FROM dbo.tblAgreementConditionAdvicePay tblRemarks WHERE tblRemarks.NumR = dbo.tblAgreementConditionAdvicePay.NumR AND tblRemarks.NumPay = 0 AND SumP-Pay>0 FOR XML PATH('')), 1, 1, '' ) AS Remark
-      FROM dbo.tblAgreementConditionAdvicePay
-      LEFT JOIN dbo.tblAgreementConditionAdvice
-        ON dbo.tblAgreementConditionAdvice.IDagreement = dbo.tblAgreementConditionAdvicePay.NumR
-
-
-       )AS tblSumAllPay
-      ON tblLastAgreements.IDagreement = tblSumAllPay.NumR
-    LEFT JOIN (
-      SELECT KodCustomer, Text
-      FROM tbltaxes
-      ) tbltaxes
-      ON
-        dbo.tblCustomers.KodCustomer = tbltaxes.KodCustomer
-  WHERE CustomerStatus != 2
-  AND ((MONTH(getdate()) = 1 AND YEAR(closeCustomerDate) = YEAR(getdate()) - 1 AND MONTH(closeCustomerDate) = 12)
-      OR (MONTH(getdate()) != 1 AND YEAR(closeCustomerDate) = YEAR(getdate()) AND MONTH(closeCustomerDate) = MONTH(getdate()) - 1))
-  ORDER BY NameTeam'''
-gvia_manager = GviaMonthNonActiveReport(query_for_gvia_month_non_active_report)
-
-gvia_manager = GviaMonthReport(query_for_gvia_month_report)
-gvia_manager.subtract_vat()
-gvia_manager.add_col_tzefi_for_month(0)
-gvia_manager.add_col_additional_payments_for_month(0)
-gvia_manager.add_col_tzefi_meuhad_for_month(0)
-######################################################
-gvia_manager.get_df_for_bonus()
-#######################################################
-gvia_manager.set_3_last_notes()
-gvia_manager.change_type_of_sums_col_to_int()
-gvia_manager.change_type_of_col_to_int(u'מספר התשלומים מעבר לאשראי')
-gvia_manager.add_mid_sums()
-gvia_manager.rows_of_sum.append(len(gvia_manager.df))
-gvia_manager.add_total_row()
-gvia_manager.add_col_tzefi_for_month(1)
-gvia_manager.add_col_additional_payments_for_month(1)
-gvia_manager.add_col_tzefi_meuhad_for_month(1)
-gvia_manager.arrange_col_order()
-sf = StyleFrame(gvia_manager.df)
-gvia_manager.apply_style_on_sum_rows(sf)
-writer = StyleFrame.ExcelWriter('gvia_month.xlsx')
-sf.to_excel(excel_writer=writer, sheet_name=u'דוח גביה חודשי- לקוחות פעילים', right_to_left=True, row_to_add_filters=0,
-            columns_and_rows_to_freeze='A2')
-gvia_non_active = GviaMonthNonActiveReport(query_for_gvia_month_non_active_report)
-sf = gvia_non_active.create_non_active_cutomers_gvia_month_report()
-sf.to_excel(excel_writer=writer, sheet_name=u'גביה חודשי- לקוחות לא פעילים', right_to_left=True, row_to_add_filters=0,
-            columns_and_rows_to_freeze='A2')
-writer.save()
-gvia_manager.change_types_of_cells()
 
 
 

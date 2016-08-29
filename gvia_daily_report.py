@@ -3,10 +3,12 @@ import pandas as pd
 from esg_services import EsgServiceManager
 from StyleFrame import StyleFrame, colors
 from datetime import datetime
-import math
 import re
 import numpy as np
 from pandas import concat
+from openpyxl import load_workbook
+from openpyxl.styles import Protection
+import json
 
 class GviaDaily(object):
     def __init__(self, status):
@@ -33,6 +35,7 @@ class GviaDaily(object):
                 KodCustomer,
                 PayProcess,
                 PayDollar,
+                agreementFinish,
                 row_number() OVER(PARTITION BY KodCustomer ORDER BY DateNew DESC) AS orderAgreementByDateDesc
               FROM
                 dbo.tblAgreementConditionAdvice
@@ -69,8 +72,9 @@ class GviaDaily(object):
                       WHERE YEAR(DatePay) = YEAR(getdate()) AND MONTH(DatePay) = MONTH(getdate())
                     ) taxesPay
             ON taxesPay.KodCustomer = dbo.tblCustomers.KodCustomer
-        WHERE (CustomerStatus = 2 OR (CustomerStatus != 2  AND taxesPay.taxsThisMonth = 1))
-        ORDER BY [צוות]'''
+        WHERE ((CustomerStatus = 2 OR (CustomerStatus != 2  AND taxesPay.taxsThisMonth = 1)))
+        AND ((closeCustomerDate IS NULL OR (CustomerStatus != 2  AND taxesPay.taxsThisMonth = 1)))
+        AND ((agreementFinish = 0 OR (CustomerStatus != 2  AND taxesPay.taxsThisMonth = 1))) ORDER BY [צוות]'''
         self.manager = EsgServiceManager()
         self.df_from_month_report = pd.read_excel(u'תכנון הצפי לחודש אוגוסט 2016.xlsx', convert_float=True, sheetname=u'צפי לחודש אוגוסט 2016')
         if status == 'report_for_hani':
@@ -147,8 +151,9 @@ class GviaDaily(object):
         dates = []
         query = '''SELECT NameCustomer, feeTeam, DatePay, feeTax
                 FROM dbo.tblCustomers LEFT JOIN dbo.tbltaxesPay
-                  ON dbo.tbltaxesPay.KodCustomer = dbo.tblCustomers.KodCustomer'''
+                  ON dbo.tbltaxesPay.KodCustomer = dbo.tblCustomers.KodCustomer ORDER BY NameCustomer'''
         q = self.manager.db_service.search(query=query)
+        print len(filter(lambda x: x['NameCustomer'] == 'AeroHandling BENGURION AIRPORT', q))
         df = pd.DataFrame.from_records(q)
         today = datetime.today()
         for index, row in df.iterrows():
@@ -278,19 +283,6 @@ class GviaDaily(object):
                  u'תשלום ששולם עד היום לייעוץ', u'צפי שנותר',u'תשלום ששולם עד היום לגביה', u'הערות מגיליון הגביה',
                  u'הערות משורת החיוב בסטטוס', u'תאריך לביצוע', u'אמצעי תשלום', u'תשובות לחני', u'הערות חני']]
         return df
-
-
-    # def change_type_of_col_to_int(self, col_name):
-    #     self.df[col_name] = self.df[col_name].apply(lambda x: int(x))
-    #
-    #
-    # def change_type_of_sums_col_to_int(self):
-    #     self.change_type_of_col_to_int(u'תשלום ייעוץ חודשי')
-    #     self.change_type_of_col_to_int(u'צפי לחודש')
-    #     self.change_type_of_col_to_int(u'תשלום ששולם עד היום לייעוץ')
-    #     self.change_type_of_col_to_int(u'צפי שנותר')
-    #     self.change_type_of_col_to_int(u'תשלום ששולם עד היום לגביה')
-
 
     def add_mid_sums(self, df):
         rows = len(df.index)
@@ -422,14 +414,14 @@ class GviaDaily(object):
         sf_positive = StyleFrame(self.df_positive)
         self.apply_style_on_sum_rows(sf_positive)
         writer = StyleFrame.ExcelWriter(file_name)
-        sf_positive.to_excel(excel_writer=writer, sheet_name=u'דוח גביה יומי חיובי', right_to_left=True, row_to_add_filters=0,
-                             columns_and_rows_to_freeze='A2')
+        sf_positive.to_excel(excel_writer=writer, sheet_name=u'דוח גביה יומי חיובי', right_to_left=True,
+                             row_to_add_filters=0, columns_and_rows_to_freeze='A2')
         self.create_negative_df(status)
         if len(self.df_negative.index) != 0:
             sf_negative = StyleFrame(self.df_negative)
             self.apply_style_on_sum_rows(sf_negative)
-            sf_negative.to_excel(excel_writer=writer, sheet_name=u'דוח גביה יומי שלילי', right_to_left=True, row_to_add_filters=0,
-                                 columns_and_rows_to_freeze='A2')
+            sf_negative.to_excel(excel_writer=writer, sheet_name=u'דוח גביה יומי שלילי', right_to_left=True,
+                                 row_to_add_filters=0, columns_and_rows_to_freeze='A2')
         writer.save()
 
     def create_report_for_each_team(self):
@@ -459,9 +451,25 @@ class GviaDaily(object):
                     first_index = last_index
                     team = new_team
 
+    def change_types_of_cells(self):
+        wb = load_workbook('Gvia day report new.xlsx')
+        ws = wb.active
+        for i in range(2, len(self.df_positive) + 2):
+            ws['E{i}'.format(i=i)].number_format = '#,###'
+            ws['F{i}'.format(i=i)].number_format = '#,###'
+            ws['G{i}'.format(i=i)].number_format = '#,###'
+            ws['H{i}'.format(i=i)].number_format = '#,###'
+            ws['I{i}'.format(i=i)].number_format = '#,###'
+        for column in ws.columns:
+            for cell in column:
+                if not cell.protection.locked:
+                    cell.protection = Protection(locked=True)
+        wb.save('Gvia day report new.xlsx')
+
 
 gvia_daily = GviaDaily('report_for_hani')
 gvia_daily.create_df()
 # gvia_daily.change_rows_for_positive_test()
 gvia_daily.create_separated_df('Gvia day report new.xlsx', 'report_for_hani')
 # gvia_daily.create_report_for_each_team()
+gvia_daily.change_types_of_cells()

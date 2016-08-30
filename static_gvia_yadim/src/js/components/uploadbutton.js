@@ -24,7 +24,7 @@ class UploadButtons extends React.Component {
 
                 $.ajax({
                     type: 'POST',
-                    url: '/api/v1/gvia_yadim_report/upload/',
+                    url: '/api/v1/gvia-yadim-report/upload/',
                     data: form_data,
                     contentType: false,
                     cache: false,

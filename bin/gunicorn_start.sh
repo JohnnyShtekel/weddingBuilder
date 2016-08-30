@@ -15,4 +15,4 @@ cd $SERVERDIR
 source ../.././.virtualenvs/gvia_yadim_report/bin/activate
 export PYTHONPATH=$SERVERDIR:$PYTHONPATH
 
-exec ../.././.virtualenvs/gvia_yadim_report/bin/gunicorn wsgi:app --name $NAME --workers $NUM_WORKERS --user=$USER -b 0.0.0.0:8008 --log-level=debug --log-file=- --timeout=600
+exec ../.././.virtualenvs/gvia_yadim_report/bin/gunicorn wsgi:app --name $NAME --workers $NUM_WORKERS --user=$USER -b 0.0.0.0:8021 --log-level=debug --log-file=- --timeout=600

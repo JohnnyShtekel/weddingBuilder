@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for, send_from_
 from werkzeug.utils import secure_filename
 from file_mangaer import FileManager
 
-app = Flask(__name__, static_folder='static-gvia-yadim')
+app = Flask(__name__, static_folder='static_gvia_yadim')
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 app.config['ALLOWED_EXTENSIONS'] = set(['xls', 'xlsx'])
 

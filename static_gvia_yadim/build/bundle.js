@@ -2106,7 +2106,7 @@
 
 	  /**
 	   * An object containing properties and methods that should be defined on
-	   * the component's constructor instead of its prototype (static-gvia-yadim methods).
+	   * the component's constructor instead of its prototype (static_gvia_yadim methods).
 	   *
 	   * @type {object}
 	   * @optional
@@ -2321,10 +2321,10 @@
 	 * Mapping from class specification keys to special processing functions.
 	 *
 	 * Although these are declared like instance properties in the specification
-	 * when defining classes using `React.createClass`, they are actually static-gvia-yadim
+	 * when defining classes using `React.createClass`, they are actually static_gvia_yadim
 	 * and are accessible on the constructor instead of the prototype. Despite
-	 * being static-gvia-yadim, they must be defined outside of the "statics" key under
-	 * which all other static-gvia-yadim methods are defined.
+	 * being static_gvia_yadim, they must be defined outside of the "statics" key under
+	 * which all other static_gvia_yadim methods are defined.
 	 */
 	var RESERVED_SPEC_KEYS = {
 	  displayName: function (Constructor, displayName) {
@@ -2711,7 +2711,7 @@
 	    if (process.env.NODE_ENV !== 'production') {
 	      // This is a tag to indicate that the use of these method names is ok,
 	      // since it's used with createClass. If it's not, then it's likely a
-	      // mistake so we'll warn you to use the static-gvia-yadim property, property
+	      // mistake so we'll warn you to use the static_gvia_yadim property, property
 	      // initializer or constructor respectively.
 	      if (Constructor.getDefaultProps) {
 	        Constructor.getDefaultProps.isReactClassApproved = {};
@@ -2788,7 +2788,7 @@
 	 * LICENSE file in the root directory of this source tree. An additional grant
 	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
-	 * @typechecks static-gvia-yadim-only
+	 * @typechecks static_gvia_yadim-only
 	 */
 
 	'use strict';
@@ -3092,7 +3092,7 @@
 	/**
 	 * ReactElementValidator provides a wrapper around a element factory
 	 * which validates the props passed to the element. This is intended to be
-	 * used only in DEV and could be replaced by a static-gvia-yadim type checker for languages
+	 * used only in DEV and could be replaced by a static_gvia_yadim type checker for languages
 	 * that support it.
 	 */
 
@@ -3176,7 +3176,7 @@
 	}
 
 	/**
-	 * Ensure that every element either is passed in a static-gvia-yadim location, in an
+	 * Ensure that every element either is passed in a static_gvia_yadim location, in an
 	 * array with an explicit keys property defined, or in an object literal
 	 * with valid key property.
 	 *
@@ -3233,7 +3233,7 @@
 	    checkReactTypeSpec(componentClass.propTypes, element.props, ReactPropTypeLocations.prop, name, element, null);
 	  }
 	  if (typeof componentClass.getDefaultProps === 'function') {
-	    process.env.NODE_ENV !== 'production' ? warning(componentClass.getDefaultProps.isReactClassApproved, 'getDefaultProps is only used on classic React.createClass ' + 'definitions. Use a static-gvia-yadim property named `defaultProps` instead.') : void 0;
+	    process.env.NODE_ENV !== 'production' ? warning(componentClass.getDefaultProps.isReactClassApproved, 'getDefaultProps is only used on classic React.createClass ' + 'definitions. Use a static_gvia_yadim property named `defaultProps` instead.') : void 0;
 	  }
 	}
 
@@ -11400,7 +11400,7 @@
 	      }
 	    }
 
-	    // For static-gvia-yadim pages, no need to put React ID and checksum. Saves lots of
+	    // For static_gvia_yadim pages, no need to put React ID and checksum. Saves lots of
 	    // bytes.
 	    if (transaction.renderToStaticMarkup) {
 	      return ret;
@@ -12471,7 +12471,7 @@
 	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * 
-	 * @typechecks static-gvia-yadim-only
+	 * @typechecks static_gvia_yadim-only
 	 */
 
 	'use strict';
@@ -15301,9 +15301,9 @@
 	      // logic, we can not catch common errors early. Therefore, we have to
 	      // catch them here, at initialization time, instead.
 	      process.env.NODE_ENV !== 'production' ? warning(!inst.getInitialState || inst.getInitialState.isReactClassApproved, 'getInitialState was defined on %s, a plain JavaScript class. ' + 'This is only supported for classes created using React.createClass. ' + 'Did you mean to define a state property instead?', this.getName() || 'a component') : void 0;
-	      process.env.NODE_ENV !== 'production' ? warning(!inst.getDefaultProps || inst.getDefaultProps.isReactClassApproved, 'getDefaultProps was defined on %s, a plain JavaScript class. ' + 'This is only supported for classes created using React.createClass. ' + 'Use a static-gvia-yadim property to define defaultProps instead.', this.getName() || 'a component') : void 0;
-	      process.env.NODE_ENV !== 'production' ? warning(!inst.propTypes, 'propTypes was defined as an instance property on %s. Use a static-gvia-yadim ' + 'property to define propTypes instead.', this.getName() || 'a component') : void 0;
-	      process.env.NODE_ENV !== 'production' ? warning(!inst.contextTypes, 'contextTypes was defined as an instance property on %s. Use a ' + 'static-gvia-yadim property to define contextTypes instead.', this.getName() || 'a component') : void 0;
+	      process.env.NODE_ENV !== 'production' ? warning(!inst.getDefaultProps || inst.getDefaultProps.isReactClassApproved, 'getDefaultProps was defined on %s, a plain JavaScript class. ' + 'This is only supported for classes created using React.createClass. ' + 'Use a static_gvia_yadim property to define defaultProps instead.', this.getName() || 'a component') : void 0;
+	      process.env.NODE_ENV !== 'production' ? warning(!inst.propTypes, 'propTypes was defined as an instance property on %s. Use a static_gvia_yadim ' + 'property to define propTypes instead.', this.getName() || 'a component') : void 0;
+	      process.env.NODE_ENV !== 'production' ? warning(!inst.contextTypes, 'contextTypes was defined as an instance property on %s. Use a ' + 'static_gvia_yadim property to define contextTypes instead.', this.getName() || 'a component') : void 0;
 	      process.env.NODE_ENV !== 'production' ? warning(typeof inst.componentShouldUpdate !== 'function', '%s has a method called ' + 'componentShouldUpdate(). Did you mean shouldComponentUpdate()? ' + 'The name is phrased as a question because the function is ' + 'expected to return a value.', this.getName() || 'A component') : void 0;
 	      process.env.NODE_ENV !== 'production' ? warning(typeof inst.componentDidUnmount !== 'function', '%s has a method called ' + 'componentDidUnmount(). But there is no such lifecycle method. ' + 'Did you mean componentWillUnmount()?', this.getName() || 'A component') : void 0;
 	      process.env.NODE_ENV !== 'production' ? warning(typeof inst.componentWillRecieveProps !== 'function', '%s has a method called ' + 'componentWillRecieveProps(). Did you mean componentWillReceiveProps()?', this.getName() || 'A component') : void 0;
@@ -17246,7 +17246,7 @@
 	    } else {
 	      if (transaction.renderToStaticMarkup) {
 	        // Normally we'd insert a comment node, but since this is a situation
-	        // where React won't take over (static-gvia-yadim pages), we can simply return
+	        // where React won't take over (static_gvia_yadim pages), we can simply return
 	        // nothing.
 	        return '';
 	      }
@@ -17513,7 +17513,7 @@
 	      if (transaction.renderToStaticMarkup) {
 	        // Normally we'd wrap this between comment nodes for the reasons stated
 	        // above, but since this is a situation where React won't take over
-	        // (static-gvia-yadim pages), we can simply return the text as it is.
+	        // (static_gvia_yadim pages), we can simply return the text as it is.
 	        return escapedText;
 	      }
 

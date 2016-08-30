@@ -23,8 +23,8 @@ class FileManager(object):
         self.db_manager = DBHandler()
 
     def extract_all_comments_and_update_cem(self, daily_report_file_path, workername):
-        self.load_file_to_df(daily_report_file_path).extract_all_comment(workername).store_comments_to_db().remove_users_file(daily_report_file_path)
-
+        self.load_file_to_df(daily_report_file_path).extract_all_comment(
+            workername).store_comments_to_db().remove_users_file(daily_report_file_path)
 
     def load_file_to_df(self, daily_report_file_path):
         self.daily_report_df = pd.read_excel(daily_report_file_path)
@@ -41,15 +41,13 @@ class FileManager(object):
                 # old_comments = row[OLD_COMMENTS_KEY]
                 employee_comment_format = date + " - " + workername + " : " + employee_comment
                 manager_comment_format = date + " - " + MANAGER_NAME + " : " + manager_comment
-
                 hs = open(TEMP_FILE_NAME, "a")
                 hs.write(self.db_manager.get_old_comment(customer_name).encode('utf-8') + "\n")
                 hs.write(employee_comment_format.encode('utf-8') + "\n")
-                if(type(row[MANAGER_ANSWER_ROW_KEY]) == unicode ):
-                      hs.write(manager_comment_format.encode('utf-8')+ "\n")
+                if type(row[MANAGER_ANSWER_ROW_KEY]) == unicode:
+                    hs.write(manager_comment_format.encode('utf-8') + "\n")
                 hs.close()
-
-                hs = open(TEMP_FILE_NAME, 'ab+')
+                hs = open(TEMP_FILE_NAME, 'r')
                 self.comments.append(
                     {COMMENTS_KEY: hs.read(), CUSTOMER_NAME_KEY_IN_OUTPUT_COMMENTS: customer_name})
                 hs.close()
@@ -57,12 +55,10 @@ class FileManager(object):
                 return self
 
     def store_comments_to_db(self):
-        for  comment in self.comments:
-             self.db_manager.inset_comment_to_db(comment[COMMENTS_KEY],comment[CUSTOMER_NAME_KEY_IN_OUTPUT_COMMENTS])
+        for comment in self.comments:
+            self.db_manager.inset_comment_to_db(comment[COMMENTS_KEY], comment[CUSTOMER_NAME_KEY_IN_OUTPUT_COMMENTS])
         return self
 
-
-    def remove_users_file(self,file_path):
+    def remove_users_file(self, file_path):
         os.remove(file_path)
         return self
-

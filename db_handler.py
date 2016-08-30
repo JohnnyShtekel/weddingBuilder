@@ -6,18 +6,18 @@ class DBHandler(object):
     def __init__(self):
         self.manager = EsgServiceManager()
 
-    def inset_comment_to_db(self,total_comment,customerName):
-       total = total_comment.decode('utf-8')
-       customer = customerName.encode('utf-8')
-       query = """
+    def inset_comment_to_db(self,total_comment, customerName):
+        total = total_comment.decode('utf-8')
+        customer = customerName.encode('utf-8')
+        query = """
             UPDATE taxs
             SET Text = '{total}'
             From tbltaxes taxs
             INNER JOIN tblCustomers
                 ON tblCustomers.kodCustomer = taxs.kodCustomer
             WHERE NameCustomer LIKE '%{customer}%'
-       """.format(total=total.encode('utf-8'),customer=customer)
-       self.manager.db_service.edit(query=query)
+        """.format(total=total.encode('utf-8'),customer=customer)
+        self.manager.db_service.edit(query=query)
 
 
     def get_old_comment(self,customerName):

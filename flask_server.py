@@ -17,22 +17,17 @@ def multiple_routes(**kwargs):
 
 @app.route('/api/v1/gvia-yadim-report/upload/', methods=['POST'])
 def get_xl_file():
-    try:
+     file = request.files['file']
+     workerName = request.form['worker']
+     if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            fn = FileManager()
+            fn.extract_all_comments_and_update_cem(os.path.join(app.config['UPLOAD_FOLDER'], filename),workerName)
+            return json.dumps({'success': True}), 200, {'ContentType':'application/json'}
+     else:
+         return json.dumps({'error': True}), 500, {'ContentType':'application/json'}
 
-         file = request.files['file']
-         workerName = request.form['worker']
-         if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                fn = FileManager()
-                fn.extract_all_comments_and_update_cem(os.path.join(app.config['UPLOAD_FOLDER'], filename),workerName)
-                return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
-         else:
-             return json.dumps({'error':False}), 200, {'ContentType':'application/json'}
-
-
-    except:
-            return json.dumps({'error':False}), 200, {'ContentType':'application/json'}
 
 
 

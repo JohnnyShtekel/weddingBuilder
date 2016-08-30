@@ -10,12 +10,12 @@ app = Flask(__name__, static_folder='static_gvia_yadim')
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 app.config['ALLOWED_EXTENSIONS'] = set(['xls', 'xlsx'])
 
-@app.route('/api/v1/gvia_yadim_report/')
+@app.route('/api/v1/gvia-yadim-report/')
 def multiple_routes(**kwargs):
     return send_file('templates/index.html')
 
 
-@app.route('/api/v1/gvia_yadim_report/upload/', methods=['POST'])
+@app.route('/api/v1/gvia-yadim-report/upload/', methods=['POST'])
 def get_xl_file():
     try:
 

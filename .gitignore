@@ -30,7 +30,6 @@ Temporary Items
 # Virtualenv
 # http://iamzed.com/2009/05/07/a-primer-on-virtualenv/
 .Python
-[Bb]in
 [Ii]nclude
 [Ll]ib
 [Ll]ib64
@@ -131,7 +130,6 @@ coverage.xml
 *.pot
 
 # Django stuff:
-*.log
 local_settings.py
 
 # Flask stuff:

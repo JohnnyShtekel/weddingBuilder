@@ -1,0 +1,46 @@
+{
+  "name": "first_react_app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "webpack.config.js",
+  "dependencies": {
+    "animate.css": "^3.5.1",
+    "babel-preset-react": "^6.11.1",
+    "class": "^0.1.4",
+    "decorators": "0.0.1",
+    "gulp": "^3.9.1",
+    "history": "^1.17.0",
+    "jsx-loader": "^0.13.2",
+    "legacy": "0.0.3",
+    "materialize-autocomplete": "^1.0.3",
+    "materialize-css": "^0.97.7",
+    "mobx": "^2.4.4",
+    "mobx-react": "^3.5.5",
+    "properties": "^1.2.1",
+    "react": "^15.1.0",
+    "react-document-title": "^2.0.2",
+    "react-dom": "^15.1.0",
+    "react-dropzone": "^3.5.3",
+    "react-dropzone-es6": "^1.0.2",
+    "react-file-drag-and-drop": "^0.1.6",
+    "react-materialize": "^0.15.1",
+    "react-parallax": "^0.4.3",
+    "react-router": "^1.0.2",
+    "react-select": "^1.0.0-beta14",
+    "react-selectize": "^2.0.3",
+    "react-stormpath": "^1.2.1",
+    "rest": "^2.0.0",
+    "transform": "^1.1.2"
+  },
+  "devDependencies": {
+    "babel-core": "^6.13.2",
+    "babel-loader": "^6.2.5",
+    "babel-preset-stage-0": "^6.5.0",
+    "babel-preset-es2015": "^6.14.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

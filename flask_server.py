@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for, send_from_
 from werkzeug.utils import secure_filename
 from file_mangaer import FileManager
 
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__, static_folder='static-gvia-yadim')
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 app.config['ALLOWED_EXTENSIONS'] = set(['xls', 'xlsx'])
 
@@ -43,4 +43,4 @@ def allowed_file(filename):
 
 if __name__ == '__main__':
     app.debug = True
-    app.run(host='127.0.0.1', debug=True, port=5001)
+    app.run(host='0.0.0.0', debug=True, port=5001)

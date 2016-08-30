@@ -1,7 +1,7 @@
 var path = require('path');
 var webpack = require('webpack');
 
-var ROOT_PATH = path.resolve(__dirname, 'static');
+var ROOT_PATH = path.resolve(__dirname, 'static-gvia-yadim');
 
 module.exports = {
     entry: path.resolve(ROOT_PATH, 'src/js/index'),

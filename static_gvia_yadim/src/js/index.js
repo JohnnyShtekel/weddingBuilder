@@ -1,7 +1,9 @@
+// import '../../vendor/materialize/dist/js/materialize'
 import React from 'react';
 import ReactDOM from 'react-dom';
 import App from '../js/components/entry';
 import Nav from '../js/components/nav'
+
 
 class Manager extends React.Component {
     constructor(props) {

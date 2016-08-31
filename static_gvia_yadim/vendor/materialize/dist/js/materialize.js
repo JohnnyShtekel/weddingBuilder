@@ -3003,7 +3003,7 @@ $(document).ready(function(){
       };
 
       options = $.extend(defaults, options);
-
+        console.log(this);
       return this.each(function() {
         var $input = $(this);
         var data = options.data,

@@ -1,20 +1,23 @@
 import React from 'react';
 import * as quries from '../utils/queries'
-import Select from 'react-select';
+import { autoComplete } from '../utils/auto_complete';
 
 class AutoComplete extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            workers: []
+            workers: {}
         };
-        this.workers = []
 
+    }
+
+    componentDidMount() {
+        autoComplete($('input.autocomplete'), this.state.workers);
     }
 
 
     componentDidUpdate() {
-          $('input.autocomplete').autocomplete(this.state.workers);
+        autoComplete($('input.autocomplete'), this.state.workers);
     }
 
 
@@ -34,7 +37,6 @@ class AutoComplete extends React.Component {
                 this.setState({
                     workers:tempData
                 });
-                this.workers = data;
             }.bind(this)
         });
 
@@ -43,20 +45,15 @@ class AutoComplete extends React.Component {
 
     render() {
         return (
-            <div className="row">
-                <div className="col s12">
-                    <div className="row">
-                        <div className="input-field col s12">
-                            <i className="material-icons prefix">perm_identity</i>
-                            <input type="text" id="autocomplete-input" onChange={this.test} className="autocomplete"/>
-                                <label htmlFor="autocomplete-input">נא לבחור עובד</label>
-                        </div>
-                    </div>
+            <div className="container">
+                <div className="input-field col s12">
+                    <input type="text" id="autocomplete-input" className="autocomplete"/>
+                    <label htmlFor="autocomplete-input">שם העובד</label>
                 </div>
             </div>
-    );
+        );
     }
-    }
+}
 
 
-    export default AutoComplete
+export default AutoComplete

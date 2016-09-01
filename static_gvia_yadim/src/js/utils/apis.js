@@ -6,7 +6,7 @@ export function uploadFile(files) {
             var form_data = new FormData(); // Creating object of FormData class
             form_data.append("file", file); // Appending parameter named file with properties of file_field to form_data
             form_data.append("worker", workerName);
-
+            document.getElementsByClassName('card-action')[0].style.display = "block";
 
             $.ajax({
                 type: 'POST',
@@ -16,9 +16,11 @@ export function uploadFile(files) {
                 cache: false,
                 processData: false,
                 success: function (data) {
+                    document.getElementsByClassName('card-action')[0].style.display = "none";
                     Materialize.toast('עדכון קובץ בוצע בהצלחה', 4000);
                 },
                 error :function (data) {
+                    document.getElementsByClassName('card-action')[0].style.display = "none";
                     Materialize.toast('פעולה נכשלה נא לבדוק את הקובץ שהכונס למערכת', 4000);
                 }
             });

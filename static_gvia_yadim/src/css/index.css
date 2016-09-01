@@ -20,42 +20,53 @@ body, #app, #app-page{
 }
 
 @-webkit-keyframes blur {
-  0% { -webkit-filter: blur(0px); }
-  100% { -webkit-filter: blur(4px); }
+    0% { -webkit-filter: blur(0px); }
+    100% { -webkit-filter: blur(4px); }
 }
 
 
 .activeDropZone > .cardContainer{
--webkit-animation-name: tada;
-  animation-name: tada;
+    -webkit-animation-name: rubberBand;
+    animation-name: rubberBand;
 }
 
-@keyframes tada {
-  from {
-    -webkit-transform: scale3d(1, 1, 1);
-    transform: scale3d(1, 1, 1);
-  }
+@keyframes rubberBand {
+    from {
+        -webkit-transform: scale3d(1, 1, 1);
+        transform: scale3d(1, 1, 1);
+    }
 
-  10%, 20% {
-    -webkit-transform: scale3d(.9, .9, .9) rotate3d(0, 0, 1, -3deg);
-    transform: scale3d(.9, .9, .9) rotate3d(0, 0, 1, -3deg);
-  }
+    30% {
+        -webkit-transform: scale3d(1.25, 0.75, 1);
+        transform: scale3d(1.25, 0.75, 1);
+    }
 
-  30%, 50%, 70%, 90% {
-    -webkit-transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, 3deg);
-    transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, 3deg);
-  }
+    40% {
+        -webkit-transform: scale3d(0.75, 1.25, 1);
+        transform: scale3d(0.75, 1.25, 1);
+    }
 
-  40%, 60%, 80% {
-    -webkit-transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, -3deg);
-    transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, -3deg);
-  }
+    50% {
+        -webkit-transform: scale3d(1.15, 0.85, 1);
+        transform: scale3d(1.15, 0.85, 1);
+    }
 
-  to {
-    -webkit-transform: scale3d(1, 1, 1);
-    transform: scale3d(1, 1, 1);
-  }
+    65% {
+        -webkit-transform: scale3d(.95, 1.05, 1);
+        transform: scale3d(.95, 1.05, 1);
+    }
+
+    75% {
+        -webkit-transform: scale3d(1.05, .95, 1);
+        transform: scale3d(1.05, .95, 1);
+    }
+
+    to {
+        -webkit-transform: scale3d(1, 1, 1);
+        transform: scale3d(1, 1, 1);
+    }
 }
+
 
 .cardContainer{
     height: 80%;
@@ -71,7 +82,7 @@ body, #app, #app-page{
 }
 
 .autocomplete-content {
-     margin-top: 0!important;
+    margin-top: 0!important;
 }
 
 
@@ -113,4 +124,8 @@ input[type=text]:focus{
     display: flex;
     flex-direction: row;
     justify-content: center;
+}
+
+.progress .indeterminate {
+    background-color: #01579b;
 }

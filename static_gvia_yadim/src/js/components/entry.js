@@ -41,6 +41,11 @@ class App extends React.Component {
                                 </div>
                             </div>
                         </div>
+                        <div className="card-action" style={{display: 'none'}}>
+                            <div className="progress">
+                                <div className="indeterminate"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </Dropzone>

@@ -44,10 +44,10 @@ class FileManager(object):
                 employee_comment_format = date + " - " + worker_name + " : " + employee_comment
                 manager_comment_format = date + " - " + MANAGER_NAME + " : " + manager_comment
                 hs = open(TEMP_FILE_NAME, "a")
-                hs.write(self.db_manager.get_old_comment(customer_name).encode('utf-8') + "\n")
-                hs.write(employee_comment_format.encode('utf-8') + "\n")
+                hs.write(self.db_manager.get_old_comment(customer_name).encode('utf-8'))
+                hs.write(employee_comment_format.encode('utf-8'))
                 if type(row[MANAGER_ANSWER_ROW_KEY]) == unicode:
-                    hs.write(manager_comment_format.encode('utf-8') + "\n")
+                    hs.write(manager_comment_format.encode('utf-8'))
                 hs.close()
                 hs = open(TEMP_FILE_NAME, 'r')
                 self.comments.append(

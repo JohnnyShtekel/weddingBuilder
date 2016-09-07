@@ -32,6 +32,7 @@ def get_xl_file():
         else:
             return json.dumps({'error': True}), 500, {'ContentType': 'application/json'}
     except Exception as e:
+        print str(e)
         return json.dumps({'error' : str(e)})
 
 

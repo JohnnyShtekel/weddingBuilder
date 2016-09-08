@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import datetime
 from esg_services import EsgServiceManager
 
 
@@ -19,7 +19,7 @@ class DBHandler(object):
                 ON tblCustomers.kodCustomer = taxs.kodCustomer
             WHERE NameCustomer LIKE '%{customer}%'
         """.format(total=total.encode('utf-8'), date_fu=date_fu, customer=customer)
-        self.manager.db_service.edit(query=query)
+        response = self.manager.db_service.edit(query=query)
         print query
 
     def get_old_comment(self, customer_name):

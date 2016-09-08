@@ -53,7 +53,6 @@ class FileManager(object):
 
     def store_comments_to_db(self, customer_name, employee_comment, manager_comment, date, employee_answer_not_empty, manager_answer_not_empty, worker_name):
         date_string = datetime.now().strftime("%d/%m/%Y")
-        print self.db_manager.get_old_comment(customer_name)
         if employee_answer_not_empty and manager_answer_not_empty:
             employee_comment_format = date_string + " - " + worker_name + " : " + employee_comment
             manager_comment_format = date_string + " - " + MANAGER_NAME + " : " + manager_comment

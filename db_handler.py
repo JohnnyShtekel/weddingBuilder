@@ -12,19 +12,22 @@ class DBHandler(object):
         customer = customer_name.encode('utf-8')
         date_fu = date.strftime("%Y-%m-%d 00:00:00")
         query = """
-            UPDATE taxs
+            UPDATE tbltaxes
             SET Text = '{total}', DateFU = '{date_fu}'
-            From tbltaxes taxs
+            From tbltaxes
             INNER JOIN tblCustomers
-                ON tblCustomers.kodCustomer = taxs.kodCustomer
-            WHERE NameCustomer LIKE '%{customer}%'
+                ON tblCustomers.kodCustomer = tbltaxes.kodCustomer
+            WHERE tblCustomers.NameCustomer LIKE '%{customer}%'
         """.format(total=total.encode('utf-8'), date_fu=date_fu, customer=customer)
-        self.manager.db_service.edit(query=query)
-        # print query
+        response = self.manager.db_service.edit(query=query)
 
     def get_old_comment(self, customer_name):
         customer = customer_name.encode('utf-8')
-        query = """SELECT a.Text
-                  FROM tbltaxes as a ,tblCustomers as b
-                  WHERE  b.kodCustomer = a.kodCustomer AND b.NameCustomer  LIKE '%{}%'""".format(customer)
+
+        query = """select Text from tblTaxes, tblCustomers
+                    where NameCustomer like '%{}%' and tblTaxes.KodCustomer=tblCustomers.KodCustomer""".format(customer)
+
+        # query = """SELECT a.Text
+        #           FROM tbltaxes as a ,tblCustomers as b
+        #           WHERE  b.kodCustomer = a.kodCustomer AND b.NameCustomer  LIKE '%{}%'""".format(customer)
         return self.manager.db_service.search(query=query)[0]['Text']

@@ -20,21 +20,21 @@ def multiple_routes(**kwargs):
 
 @app.route('/api/v1/gvia-yadim-report/upload/', methods=['POST'])
 def get_xl_file():
-    try:
-        chosen_file = request.files['file']
-        worker_name = request.form['worker']
-        if chosen_file and allowed_file(chosen_file.filename):
-            filename = secure_filename(chosen_file.filename)
-            chosen_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            fn = FileManager()
-            fn.extract_all_comments_and_update_cem(os.path.join(app.config['UPLOAD_FOLDER'], filename), worker_name)
-            return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
-        else:
-            return json.dumps({'error': True}), 500, {'ContentType': 'application/json'}
-    except Exception as e:
-        with open('error.txt', 'w') as f:
-            f.write(str(e))
+    # try:‎
+    chosen_file = request.files['file']
+    worker_name = request.form['worker']
+    if chosen_file and allowed_file(chosen_file.filename):
+        filename = secure_filename(chosen_file.filename)
+        chosen_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        fn = FileManager()
+        fn.extract_all_comments_and_update_cem(os.path.join(app.config['UPLOAD_FOLDER'], filename), worker_name)
+        return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
+    else:
         return json.dumps({'error': True}), 500, {'ContentType': 'application/json'}
+    # except Exception as e:
+    #     with open('error.txt', 'w') as f:
+    #         f.write(str(e))
+    #     return json.dumps({'error': True}), 500, {'ContentType': 'application/json'}
 
 
 def allowed_file(filename):

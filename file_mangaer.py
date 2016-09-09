@@ -4,7 +4,6 @@ import os
 from datetime import datetime
 import math
 import pandas as pd
-from time import sleep
 
 from db_handler import DBHandler
 
@@ -40,18 +39,22 @@ class FileManager(object):
             customer_name = self.daily_report_df.loc[index][CUSTOMER_NAME_KEY]
             employee_comment = self.daily_report_df.loc[index][EMPLOYEE_ANSWER_ROW_KEY]
             manager_comment = self.daily_report_df.loc[index][MANAGER_ANSWER_ROW_KEY]
+            date_for_action = self.convert_pandas_date_to_datetime(self.daily_report_df.loc[index][DATE_KEY]).strftime("%Y-%m-%d 00:00:00")
             employee_answer_not_empty = type(
                 self.daily_report_df.loc[index][EMPLOYEE_ANSWER_ROW_KEY]) == unicode or not math.isnan(
                 self.daily_report_df.loc[index][EMPLOYEE_ANSWER_ROW_KEY])
             manager_answer_not_empty = type(
                 self.daily_report_df.loc[index][MANAGER_ANSWER_ROW_KEY]) == unicode or not math.isnan(
                 self.daily_report_df.loc[index][MANAGER_ANSWER_ROW_KEY])
-            self.store_comments_to_db(customer_name, employee_comment, manager_comment, datetime.now(), employee_answer_not_empty, manager_answer_not_empty, worker_name)
+            self.store_comments_to_db(customer_name, employee_comment, manager_comment, datetime.now(), employee_answer_not_empty, manager_answer_not_empty, worker_name, date_for_action)
 
 
 
+    def convert_pandas_date_to_datetime(self, pandas_date):
+        return datetime(pandas_date.year, pandas_date.month, pandas_date.day)
 
-    def store_comments_to_db(self, customer_name, employee_comment, manager_comment, date, employee_answer_not_empty, manager_answer_not_empty, worker_name):
+
+    def store_comments_to_db(self, customer_name, employee_comment, manager_comment, date, employee_answer_not_empty, manager_answer_not_empty, worker_name, date_for_action):
         date_string = datetime.now().strftime("%d/%m/%Y")
         # print self.db_manager.get_old_comment(customer_name)
         # print "*********************************************"
@@ -61,20 +64,20 @@ class FileManager(object):
             comments = '\n'.join(
                 [self.db_manager.get_old_comment(customer_name).encode('utf-8'),
                  employee_comment_format.encode('utf-8'), manager_comment_format.encode('utf-8')])
-            self.db_manager.inset_comment_to_db(comments, customer_name, date)
+            self.db_manager.inset_comment_to_db(comments, customer_name, date_for_action)
         elif employee_answer_not_empty and not manager_answer_not_empty:
             employee_comment_format = date_string + " - " + worker_name + " : " + employee_comment
             comments = '\n'.join(
                 [self.db_manager.get_old_comment(customer_name).encode('utf-8'),
                  employee_comment_format.encode('utf-8')])
-            self.db_manager.inset_comment_to_db(comments, customer_name, date)
+            self.db_manager.inset_comment_to_db(comments, customer_name, date_for_action)
 
         elif not employee_answer_not_empty and manager_answer_not_empty:
             manager_comment_format = date_string + " - " + MANAGER_NAME + " : " + manager_comment
             comments = '\n'.join(
                 [self.db_manager.get_old_comment(customer_name).encode('utf-8'),
                  manager_comment_format.encode('utf-8')])
-            self.db_manager.inset_comment_to_db(comments, customer_name, date)
+            self.db_manager.inset_comment_to_db(comments, customer_name, date_for_action)
 
 
     def remove_users_file(self, file_path):

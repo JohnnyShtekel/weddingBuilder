@@ -45,9 +45,11 @@ def get_xl_file():
 def run_department_report():
     # try:‎
     year = request.form['years']
-    mounth = request.form['mounth']
+    # month = request.form['month']
+    # day = request.form['day']
+    # print day
+    # print month
     print year
-    print mounth
 
 
     return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}

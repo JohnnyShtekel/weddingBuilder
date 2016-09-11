@@ -16,7 +16,7 @@ class Root extends React.Component {
         return (
             <div id="app-id">
                 <Nav/>
-                <DailyDepartmentReport />
+                <DailyDepartmentReport/>
             </div>
         );
     }

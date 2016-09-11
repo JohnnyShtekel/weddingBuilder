@@ -24,7 +24,7 @@ export function uploadFile(files) {
                     document.getElementsByClassName('card-action')[0].style.display = "none";
                     Materialize.toast('עדכון קובץ בוצע בהצלחה', 4000);
                 },
-                error :function (data) {
+                error: function (data) {
                     document.getElementsByClassName('card-action')[0].style.display = "none";
                     Materialize.toast('פעולה נכשלה נא לבדוק את הקובץ שהכונס למערכת', 4000);
                 }
@@ -40,32 +40,42 @@ export function uploadFile(files) {
 
 }
 
+function downloadCv(e) {
+    e.preventDefault();
+
+}
 
 
+export function RunDepartmentReport(day, month, year) {
 
-export function RunDepartmentReport(years,mounth) {
+    var form_data = new FormData(); // Creating object of FormData class
+    form_data.append('day',day);
+    form_data.append('month',month);
+    form_data.append('year',year);
+    document.getElementsByClassName('card-action')[0].style.display = "block";
 
-            var form_data = new FormData(); // Creating object of FormData class
-            form_data.append("years", years);
-            form_data.append("mounth", mounth); // Appending parameter named file with properties of file_field to form_data
-            document.getElementsByClassName('card-action')[0].style.display = "block";
-
-            $.ajax({
-                type: 'POST',
-                url: '/api/v1/gvia-yadim-report/runDeparatmentReport/',
-                data: form_data,
-                contentType: false,
-                cache: false,
-                processData: false,
-                success: function (data) {
-                    document.getElementsByClassName('card-action')[0].style.display = "none";
-                    Materialize.toast('פעולה עברה בהצלחה,נא פתח את הקובץ', 4000);
-                },
-                error :function (data) {
-                    document.getElementsByClassName('card-action')[0].style.display = "none";
-                    Materialize.toast('הפעולה נכשלה', 4000);
-                }
-            });
+    $.ajax({
+        type: 'POST',
+        url: '/api/v1/gvia-yadim-report/runDeparatmentReport/',
+        data: form_data,
+        contentType: false,
+        cache: false,
+        processData: false,
+        success: function (data) {
+            document.getElementsByClassName('card-action')[0].style.display = "none";
+            Materialize.toast('פעולה עברה בהצלחה,נא פתח את הקובץ', 4000);
+            //let downloadRef = $('<a/>');
+            //downloadRef.attr({
+            //    href: '/api/v1/hr_app/download_file/',
+            //    target: '_blank',
+            //    download: 'דוח גבייה יומי מחלקתי - {}'
+            //})[0].click();
+        },
+        error: function (data) {
+            document.getElementsByClassName('card-action')[0].style.display = "none";
+            Materialize.toast('הפעולה נכשלה', 4000);
+        }
+    });
 
 
 }

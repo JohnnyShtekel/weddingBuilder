@@ -1,32 +1,28 @@
 // import '../../vendor/materialize/dist/js/materialize'
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from '../js/components/entry';
+import { render } from 'react-dom';
+import createBrowserHistory from 'history/lib/createBrowserHistory';
+
+import App from '../js/components/entry'
 import Nav from '../js/components/nav'
+import DailyDepartmentReport from '../js/components/dailydepartmentreport'
 
 
-class Manager extends React.Component {
-    constructor(props) {
-        super(props);
-
-    }
+class Root extends React.Component {
 
 
     render() {
         return (
-            <div id="app-page">
+            <div id="app-id">
                 <Nav/>
                 <App/>
             </div>
-        )
-
+        );
     }
-
 }
 
 
-ReactDOM
-    .render(<Manager/>, document.getElementById(
-        'app'
-    ))
-;
+
+
+ReactDOM.render(<Root/>, document.getElementById('app'));

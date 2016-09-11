@@ -23,11 +23,13 @@ def get_xl_file():
     # try:‎
     chosen_file = request.files['file']
     worker_name = request.form['worker']
+    manager_name = request.form['manager']
+    print manager_name
     if chosen_file and allowed_file(chosen_file.filename):
         filename = secure_filename(chosen_file.filename)
         chosen_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         fn = FileManager()
-        fn.extract_all_comments_and_update_cem(os.path.join(app.config['UPLOAD_FOLDER'], filename), worker_name)
+        fn.extract_all_comments_and_update_cem(os.path.join(app.config['UPLOAD_FOLDER'], filename), worker_name, manager_name)
         return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
     else:
         return json.dumps({'error': True}), 500, {'ContentType': 'application/json'}
@@ -44,4 +46,5 @@ def allowed_file(filename):
 
 if __name__ == '__main__':
     app.debug = True
-    app.run(host='0.0.0.0', debug=True, port=5000)
+    # app.run(host='0.0.0.0', debug=True, port=5000)
+    app.run(host='127.0.0.1', debug=True, port=8080)

@@ -19,7 +19,7 @@ class DBHandler(object):
                 ON tblCustomers.kodCustomer = tbltaxes.kodCustomer
             WHERE tblCustomers.NameCustomer LIKE '%{customer}%'
         """.format(total=total.encode('utf-8'), date_fu=date_fu, customer=customer)
-        response = self.manager.db_service.edit(query=query)
+        # response = self.manager.db_service.edit(query=query)
 
     def get_old_comment(self, customer_name):
         customer = customer_name.encode('utf-8')

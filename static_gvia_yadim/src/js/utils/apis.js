@@ -7,6 +7,11 @@ export function uploadFile(files) {
             form_data.append("file", file); // Appending parameter named file with properties of file_field to form_data
             form_data.append("worker", workerName);
             document.getElementsByClassName('card-action')[0].style.display = "block";
+            var appRunnerStringObject = localStorage.getItem('user');
+            var appRunnerObject = JSON.parse(appRunnerStringObject.toString());
+            var appRunnerName = appRunnerObject.user_first_name;
+            console.log(appRunnerName);
+            form_data.append("manager", appRunnerName);
 
             $.ajax({
                 type: 'POST',

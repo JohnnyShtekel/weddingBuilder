@@ -97,7 +97,7 @@
 	                'div',
 	                { id: 'app-id' },
 	                _react2.default.createElement(_nav2.default, null),
-	                _react2.default.createElement(_entry2.default, null)
+	                _react2.default.createElement(_dailydepartmentreport2.default, null)
 	            );
 	        }
 	    }]);
@@ -27607,6 +27607,7 @@
 	    value: true
 	});
 	exports.uploadFile = uploadFile;
+	exports.RunDepartmentReport = RunDepartmentReport;
 	function uploadFile(files) {
 	    if (document.getElementById("autocomplete-input").value != "") {
 	        if (files.length != 0) {
@@ -27644,6 +27645,31 @@
 	    } else {
 	        Materialize.toast('נא לבחור שם עובד', 4000);
 	    }
+	}
+
+	function RunDepartmentReport(years, mounth) {
+
+	    var form_data = new FormData(); // Creating object of FormData class
+	    form_data.append("years", years);
+	    form_data.append("mounth", mounth); // Appending parameter named file with properties of file_field to form_data
+	    document.getElementsByClassName('card-action')[0].style.display = "block";
+
+	    $.ajax({
+	        type: 'POST',
+	        url: '/api/v1/gvia-yadim-report/runDeparatmentReport/',
+	        data: form_data,
+	        contentType: false,
+	        cache: false,
+	        processData: false,
+	        success: function success(data) {
+	            document.getElementsByClassName('card-action')[0].style.display = "none";
+	            Materialize.toast('פעולה עברה בהצלחה,נא פתח את הקובץ', 4000);
+	        },
+	        error: function error(data) {
+	            document.getElementsByClassName('card-action')[0].style.display = "none";
+	            Materialize.toast('הפעולה נכשלה', 4000);
+	        }
+	    });
 	}
 
 /***/ },
@@ -27708,7 +27734,7 @@
 /* 242 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
@@ -27719,6 +27745,8 @@
 	var _react = __webpack_require__(1);
 
 	var _react2 = _interopRequireDefault(_react);
+
+	var _apis = __webpack_require__(240);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -27738,32 +27766,238 @@
 	    }
 
 	    _createClass(DailyDepartmentReport, [{
-	        key: "componentDidMount",
+	        key: 'handleSubmit',
+	        value: function handleSubmit(e) {
+	            e.preventDefault();
+	            (0, _apis.RunDepartmentReport)(document.getElementById("years").value, document.getElementById("mounths").value);
+	        }
+	    }, {
+	        key: 'componentDidMount',
 	        value: function componentDidMount() {}
 	    }, {
-	        key: "componentDidUpdate",
+	        key: 'componentDidUpdate',
 	        value: function componentDidUpdate() {}
 	    }, {
-	        key: "render",
+	        key: 'componentWillMount',
+	        value: function componentWillMount() {}
+	    }, {
+	        key: 'render',
 	        value: function render() {
 	            return _react2.default.createElement(
-	                "div",
-	                { className: "container cardContainer animated" },
+	                'div',
+	                { className: 'container cardContainer animated' },
 	                _react2.default.createElement(
-	                    "div",
-	                    { className: "card blue-grey darken-1" },
+	                    'div',
+	                    { className: 'card blue-grey darken-1' },
 	                    _react2.default.createElement(
-	                        "div",
-	                        { "class": "card-content white-text", dir: "rtl" },
+	                        'div',
+	                        { className: 'card-content white-text', dir: 'rtl' },
 	                        _react2.default.createElement(
-	                            "span",
-	                            { "class": "card-title" },
-	                            "ברוכים הבאים"
+	                            'span',
+	                            { className: 'card-title' },
+	                            'ברוכים הבאים'
 	                        ),
 	                        _react2.default.createElement(
-	                            "div",
-	                            { className: "input-field col s12" },
-	                            _react2.default.createElement("input", { type: "date", "class": "datepicker" })
+	                            'div',
+	                            { className: 'orange-text text-lighten-4' },
+	                            _react2.default.createElement(
+	                                'p',
+	                                null,
+	                                'ראשית, בחר תאריך לפי שנה וחודש'
+	                            ),
+	                            _react2.default.createElement(
+	                                'p',
+	                                null,
+	                                'לאחר מכן, לחץ על כפתור הרץ דו"ח'
+	                            )
+	                        ),
+	                        _react2.default.createElement(
+	                            'span',
+	                            null,
+	                            'בחר חודש'
+	                        ),
+	                        _react2.default.createElement(
+	                            'div',
+	                            { 'class': 'input-field col s12' },
+	                            _react2.default.createElement(
+	                                'select',
+	                                { id: 'mounths' },
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '1' },
+	                                    'ינואר'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2' },
+	                                    'פברואר'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '3' },
+	                                    'מרץ'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '4' },
+	                                    'אפריל'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '5' },
+	                                    'מאי'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '6' },
+	                                    'יוני'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '7' },
+	                                    'יולי'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '8' },
+	                                    'אוגוסט'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '9' },
+	                                    'ספטמבר'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '10' },
+	                                    'אוקטובר'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '11' },
+	                                    'נובמבר'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '12' },
+	                                    'דצמבר'
+	                                )
+	                            )
+	                        ),
+	                        _react2.default.createElement(
+	                            'span',
+	                            null,
+	                            'בחר שנה'
+	                        ),
+	                        _react2.default.createElement(
+	                            'div',
+	                            { 'class': 'input-field col s12' },
+	                            _react2.default.createElement(
+	                                'select',
+	                                { id: 'years' },
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2000' },
+	                                    '2000'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2001' },
+	                                    '2001'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2002' },
+	                                    '2002'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2003' },
+	                                    '2003'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2005' },
+	                                    '2004'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2006' },
+	                                    '2006'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2007' },
+	                                    '2007'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2008' },
+	                                    '2008'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2009' },
+	                                    '2009'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2010' },
+	                                    '2010'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2011' },
+	                                    '2011'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2012' },
+	                                    '2012'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2013' },
+	                                    '2013'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2015' },
+	                                    '2015'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2016' },
+	                                    '2016'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'option',
+	                                    { value: '2017' },
+	                                    '2017'
+	                                )
+	                            )
+	                        ),
+	                        _react2.default.createElement(
+	                            'div',
+	                            { className: 'container fileInputContainer' },
+	                            _react2.default.createElement(
+	                                'div',
+	                                { className: 'file-field input-field' },
+	                                _react2.default.createElement(
+	                                    'div',
+	                                    { onClick: this.handleSubmit, className: 'btn white black-text container' },
+	                                    'הרץ דוח'
+	                                )
+	                            )
+	                        )
+	                    ),
+	                    _react2.default.createElement(
+	                        'div',
+	                        { className: 'card-action', style: { display: 'none' } },
+	                        _react2.default.createElement(
+	                            'div',
+	                            { className: 'progress' },
+	                            _react2.default.createElement('div', { className: 'indeterminate' })
 	                        )
 	                    )
 	                )

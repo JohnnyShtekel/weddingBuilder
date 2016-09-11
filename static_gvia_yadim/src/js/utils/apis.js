@@ -39,3 +39,33 @@ export function uploadFile(files) {
     }
 
 }
+
+
+
+
+export function RunDepartmentReport(years,mounth) {
+
+            var form_data = new FormData(); // Creating object of FormData class
+            form_data.append("years", years);
+            form_data.append("mounth", mounth); // Appending parameter named file with properties of file_field to form_data
+            document.getElementsByClassName('card-action')[0].style.display = "block";
+
+            $.ajax({
+                type: 'POST',
+                url: '/api/v1/gvia-yadim-report/runDeparatmentReport/',
+                data: form_data,
+                contentType: false,
+                cache: false,
+                processData: false,
+                success: function (data) {
+                    document.getElementsByClassName('card-action')[0].style.display = "none";
+                    Materialize.toast('פעולה עברה בהצלחה,נא פתח את הקובץ', 4000);
+                },
+                error :function (data) {
+                    document.getElementsByClassName('card-action')[0].style.display = "none";
+                    Materialize.toast('הפעולה נכשלה', 4000);
+                }
+            });
+
+
+}

@@ -39,6 +39,21 @@ def get_xl_file():
     #     return json.dumps({'error': True}), 500, {'ContentType': 'application/json'}
 
 
+
+
+@app.route('/api/v1/gvia-yadim-report/runDeparatmentReport/', methods=['POST'])
+def run_department_report():
+    # try:‎
+    year = request.form['years']
+    mounth = request.form['mounth']
+    print year
+    print mounth
+
+
+    return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
+
+
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']

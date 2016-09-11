@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import os
-from datetime import datetime
+import datetime
 import math
 import pandas as pd
 
 from db_handler import DBHandler
 
-MANAGER_ANSWER_ROW_KEY = u'הערות חני'
-EMPLOYEE_ANSWER_ROW_KEY = u'תשובות לחני'
+MANAGER_NAME = u'חני'
+MANAGER_ANSWER_ROW_KEY = u'הערות לחני/אורטל'
+EMPLOYEE_ANSWER_ROW_KEY = u'תשובות לחני/אורטל'
 CUSTOMER_NAME_KEY_IN_OUTPUT_COMMENTS = 'customerName'
 CUSTOMER_NAME_KEY = u'שם לקוח'
 TEAM_NAME_KEY = u'צוות'
@@ -38,23 +39,24 @@ class FileManager(object):
             customer_name = self.daily_report_df.loc[index][CUSTOMER_NAME_KEY]
             employee_comment = self.daily_report_df.loc[index][EMPLOYEE_ANSWER_ROW_KEY]
             manager_comment = self.daily_report_df.loc[index][MANAGER_ANSWER_ROW_KEY]
-            date_for_action = self.convert_pandas_date_to_datetime(self.daily_report_df.loc[index][DATE_KEY]).strftime(
-                "%Y-%m-%d 00:00:00")
+            date_for_action = self.daily_report_df.loc[index][DATE_KEY]
+            date_for_action = '-'.join([str(date_for_action.year), str(date_for_action.month), str(date_for_action.day)]) + ' ' + '00:00:00'
             employee_answer_not_empty = type(
                 self.daily_report_df.loc[index][EMPLOYEE_ANSWER_ROW_KEY]) == unicode or not math.isnan(
                 self.daily_report_df.loc[index][EMPLOYEE_ANSWER_ROW_KEY])
             manager_answer_not_empty = type(
                 self.daily_report_df.loc[index][MANAGER_ANSWER_ROW_KEY]) == unicode or not math.isnan(
                 self.daily_report_df.loc[index][MANAGER_ANSWER_ROW_KEY])
-            self.store_comments_to_db(customer_name, employee_comment, manager_comment, datetime.now(),
-                                      employee_answer_not_empty, manager_answer_not_empty, worker_name, date_for_action, manager_name)
+            self.store_comments_to_db(customer_name, employee_comment, manager_comment, datetime.datetime.now(), employee_answer_not_empty, manager_answer_not_empty, worker_name, date_for_action, manager_name)
+
+
 
     def convert_pandas_date_to_datetime(self, pandas_date):
-        return datetime(pandas_date.year, pandas_date.month, pandas_date.day)
+        return datetime.datetime(pandas_date.year, pandas_date.month, pandas_date.day)
 
-    def store_comments_to_db(self, customer_name, employee_comment, manager_comment, date, employee_answer_not_empty,
-                             manager_answer_not_empty, worker_name, date_for_action, manager_name):
-        date_string = datetime.now().strftime("%d/%m/%Y")
+
+    def store_comments_to_db(self, customer_name, employee_comment, manager_comment, date, employee_answer_not_empty, manager_answer_not_empty, worker_name, date_for_action, manager_name):
+        date_string = date.strftime("%d/%m/%Y")
         # print self.db_manager.get_old_comment(customer_name)
         # print "*********************************************"
         if employee_answer_not_empty and manager_answer_not_empty:
@@ -77,6 +79,7 @@ class FileManager(object):
                 [self.db_manager.get_old_comment(customer_name).encode('utf-8'),
                  manager_comment_format.encode('utf-8')])
             self.db_manager.inset_comment_to_db(comments, customer_name, date_for_action)
+
 
     def remove_users_file(self, file_path):
         os.remove(file_path)

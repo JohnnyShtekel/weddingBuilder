@@ -21,7 +21,6 @@ COMMENTS_KEY = 'comments'
 DATE = 'date'
 TEMP_FILE_NAME = "hst.txt"
 
-
 class FileManager(object):
     def __init__(self):
         self.daily_report_df = pd.DataFrame()

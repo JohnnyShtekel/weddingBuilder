@@ -28,9 +28,8 @@ class DBHandler(object):
         try:
             return self.manager.db_service.search(query=query)[0]['Text']
         except:
-            pass
-            # print customer_name
-            # print self.manager.db_service.search(query=query)
+            print customer_name
+            print self.manager.db_service.search(query=query)
 
 # customer = "נאנאוניקס אימג''ינג בעמ"
 # print result

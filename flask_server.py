@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import json
 import os
-
+import datetime
 from flask import Flask, request
 from flask import send_file
 from werkzeug.utils import secure_filename
-
+from gvia_daily_report import GviaDaily
 from file_mangaer import FileManager
 
 app = Flask(__name__, static_folder='static_gvia_yadim')
@@ -24,7 +24,6 @@ def get_xl_file():
     chosen_file = request.files['file']
     worker_name = request.form['worker']
     manager_name = request.form['manager']
-    print manager_name
     if chosen_file and allowed_file(chosen_file.filename):
         filename = secure_filename(chosen_file.filename)
         chosen_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
@@ -43,12 +42,15 @@ def get_xl_file():
 
 @app.route('/api/v1/gvia-yadim-report/runDeparatmentReport/', methods=['POST'])
 def run_department_report():
-    # try:‎
-    year = request.form['years']
-    mounth = request.form['mounth']
+    day = request.form['day']
+    year = request.form['year']
+    month = request.form['month']
+    print day
     print year
-    print mounth
-
+    print month
+    # chosen_date = datetime.date(year, month, day)
+    # gvia_daily_report = GviaDaily('report_for_hani', chosen_date)
+    # gvia_daily_report.run_daily_report()
 
     return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
@@ -61,5 +63,4 @@ def allowed_file(filename):
 
 if __name__ == '__main__':
     app.debug = True
-    # app.run(host='0.0.0.0', debug=True, port=5000)
-    app.run(host='127.0.0.1', debug=True, port=8080)
+    app.run(host='0.0.0.0', debug=True, port=5000)

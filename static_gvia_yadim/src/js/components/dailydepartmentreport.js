@@ -10,9 +10,9 @@ class DailyDepartmentReport extends React.Component {
 
     handleSubmit(e) {
         e.preventDefault();
-        let currentDate = new Date(new Date(document.getElementById("datepicker").value));
-        let day = currentDate.getDay();
-        let month = currentDate.getMonth();
+        let currentDate = new Date(document.getElementById("datepicker").value);
+        let day = currentDate.getDate();
+        let month = currentDate.getMonth() + 1;
         let year = currentDate.getFullYear();
         RunDepartmentReport(day, month, year)
     }

@@ -10,12 +10,88 @@ import datetime
 from gvia_month_non_active_customers import GviaMonthNonActiveReport
 import numpy as np
 from openpyxl.styles import Alignment
-from queries.query_for_gvia_month_non_active_report import query_for_gvia_month_non_active_report
-from queries.query_for_gvia_report import query_for_gvia_month_report
+
 
 
 class GviaMonthReport(object):
-    def __init__(self, query, chosen_date):
+    def __init__(self, month, year):
+        query = '''SELECT
+  NameTeam AS [צוות],
+  NameCustomer AS [שם לקוח],
+  MiddlePay AS [אמצעי תשלום],
+  AgreementKind AS [סוג לקוח],
+  CASE WHEN proceFinished=0 THEN 'כן' ELSE '' END AS [לקוח משפטי],
+  CASE WHEN Conditions='דולר' THEN ISNULL(PayDollar, 0)*4 ELSE ISNULL(PayDollar, 0) END AS [תשלום ייעוץ חודשי],
+  ISNULL(SumBonus,0) as [תשלום על בונוס],
+  ISNULL(SumSpecial,0) as [תשלומים מיוחדים],
+  ISNULL(NumOfDebt,0) as [מספר התשלומים מעבר לאשראי],
+  ISNULL(Debt,0) as [סכום התשלומים מעבר לאשראי],
+  ISNULL(Remark,'') as [הערות],
+  ISNULL(Text, '') AS [הערות מגיליון הגביה]
+FROM
+  dbo.tblCustomers
+  LEFT JOIN
+  dbo.tblTeamList
+    ON dbo.tblCustomers.KodTeamCare = dbo.tblTeamList.KodTeamCare
+  LEFT JOIN
+  (SELECT * FROM
+    (
+      SELECT
+        IDagreement,
+        KodAgreementKind,
+        KodCustomer,
+        PayProcess,
+        PayDollar,
+        agreementFinish,
+        row_number() OVER(PARTITION BY KodCustomer ORDER BY DateNew DESC) AS orderAgreementByDateDesc
+      FROM
+        dbo.tblAgreementConditionAdvice
+    ) AS temp
+      WHERE temp.orderAgreementByDateDesc = 1) AS tblLastAgreements
+    ON dbo.tblCustomers.KodCustomer = tblLastAgreements.KodCustomer
+  LEFT JOIN tblJudicialProc
+    ON tblCustomers.KodCustomer = tblJudicialProc.kodCustomer
+  LEFT JOIN dbo.tblMiddlePay
+    ON tblLastAgreements.PayProcess = dbo.tblMiddlePay.KodMiddlePay
+  LEFT JOIN dbo.tblAgreementKind
+    ON dbo.tblAgreementKind.KodAgreementKind = tblLastAgreements.KodAgreementKind
+  LEFT JOIN (
+    SELECT DISTINCT NumR, Conditions,
+      SUM(CASE WHEN NumPay = 0 AND SumP-Pay>0 AND PayRemark LIKE '%בונוס%' THEN SumP-pay ELSE 0 END) OVER(PARTITION BY NumR) AS SumBonus,
+      SUM(CASE WHEN NumPay = 0 AND SumP-Pay>0  AND NOT PayRemark LIKE '%בונוס%' THEN SumP-pay ELSE 0 END) OVER(PARTITION BY NumR) AS SumSpecial,
+      SUM(CASE WHEN NumPay > 0 AND SumP-Pay>0  AND DatePay IS NULL AND (GETDATE() > (CASE
+     WHEN tblAgreementConditionAdvice.shotef = 1 THEN
+       DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,
+               DateAdd(DAY,-1, Cast(CONVERT(VARCHAR(10),DATEPART(MM, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103)
+                                    + '/' + '01/' + CONVERT(VARCHAR(10),DATEPART(YYYY, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103) AS DATETIME)))
+     ELSE
+       DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,tblAgreementConditionAdvicePay.DateP)
+     END)) THEN 1 ELSE 0 END) OVER(PARTITION BY NumR) AS NumOfDebt,
+      SUM(CASE WHEN NumPay > 0 AND SumP-Pay>0  AND DatePay IS NULL AND (GETDATE() > (CASE
+     WHEN tblAgreementConditionAdvice.shotef = 1 THEN
+       DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,
+               DateAdd(DAY,-1, Cast(CONVERT(VARCHAR(10),DATEPART(MM, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103)
+                                    + '/' + '01/' + CONVERT(VARCHAR(10),DATEPART(YYYY, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103) AS DATETIME)))
+     ELSE
+       DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,tblAgreementConditionAdvicePay.DateP)
+     END) ) THEN SumP ELSE 0 END) OVER(PARTITION BY NumR) AS Debt,
+      STUFF((SELECT ', ' + tblRemarks.PayRemark AS [text()]FROM dbo.tblAgreementConditionAdvicePay tblRemarks WHERE tblRemarks.NumR = dbo.tblAgreementConditionAdvicePay.NumR AND tblRemarks.NumPay = 0 AND SumP-Pay>0 FOR XML PATH('')), 1, 1, '' ) AS Remark
+    FROM dbo.tblAgreementConditionAdvicePay
+    LEFT JOIN dbo.tblAgreementConditionAdvice
+      ON dbo.tblAgreementConditionAdvice.IDagreement = dbo.tblAgreementConditionAdvicePay.NumR
+
+
+     )AS tblSumAllPay
+    ON tblLastAgreements.IDagreement = tblSumAllPay.NumR
+  LEFT JOIN (
+    SELECT KodCustomer, Text
+    FROM tbltaxes
+    ) tbltaxes
+    ON
+      dbo.tblCustomers.KodCustomer = tbltaxes.KodCustomer
+WHERE CustomerStatus = 2
+AND agreementFinish = 0
+ORDER BY NameTeam'''
         self.manager = EsgServiceManager()
         self.df = pd.DataFrame.from_records(self.manager.db_service.search(query=query))
         self.rows_of_sum = []
@@ -23,12 +99,13 @@ class GviaMonthReport(object):
         q = self.manager.db_service.search(query=query_for_vat)
         df_for_vat = pd.DataFrame.from_records(q)
         self.vat = df_for_vat['Tax'][len(df_for_vat) - 1]
-        self.month = chosen_date.month
-        self.year = chosen_date.year
+        self.month = month
+        self.year = year
 
     def subtract_vat(self):
         self.df[u'תשלום על בונוס'] = self.df[u'תשלום על בונוס'].apply(lambda x: x / (1 + self.vat))
-        self.df[u'סכום התשלומים מעבר לאשראי'] = self.df[u'סכום התשלומים מעבר לאשראי'].apply(lambda x: x / (1 + self.vat))
+        self.df[u'סכום התשלומים מעבר לאשראי'] = self.df[u'סכום התשלומים מעבר לאשראי'].apply(
+            lambda x: x / (1 + self.vat))
         self.df[u'תשלומים מיוחדים'] = self.df[u'תשלומים מיוחדים'].apply(lambda x: x / (1 + self.vat))
 
     def add_col_tzefi_for_month(self, status):
@@ -36,7 +113,7 @@ class GviaMonthReport(object):
         rows = len(self.df.index)
         if status == 1:
             for r in range(2, rows + 2):
-                if r-2 not in self.rows_of_sum:
+                if r - 2 not in self.rows_of_sum:
                     tzefi_for_month.append('=IF(E{r}={yes},0,IF(I{r}>3,0,F{r}))'.format(r=r, yes='"כן"'))
                 else:
                     tzefi_for_month.append(self.df.iloc[r - 2][u'צפי לחודש'])
@@ -45,13 +122,12 @@ class GviaMonthReport(object):
                 tzefi_for_month.append(0)
         self.df[u'צפי לחודש'] = tzefi_for_month
 
-
     def add_col_additional_payments_for_month(self, status):
         additional_payments = []
         rows = len(self.df.index)
         if status == 1:
             for r in range(2, rows + 2):
-                if r-2 not in self.rows_of_sum:
+                if r - 2 not in self.rows_of_sum:
                     additional_payments.append("=IF(E{r}={yes}, 0, SUM(G{r}+H{r}+J{r}+M{r}))".format(r=r, yes='"כן"'))
                 else:
                     additional_payments.append(self.df.iloc[r - 2][u'תשלומים נוספים בחודש'])
@@ -65,7 +141,7 @@ class GviaMonthReport(object):
         rows = len(self.df.index)
         if status == 1:
             for r in range(2, rows + 2):
-                if r-2 not in self.rows_of_sum:
+                if r - 2 not in self.rows_of_sum:
                     tzefi_meuhad.append('=SUM(N{r}+O{r})'.format(r=r))
                 else:
                     tzefi_meuhad.append(self.df.iloc[r - 2][u'צפי מאוחד'])
@@ -73,7 +149,6 @@ class GviaMonthReport(object):
             for r in range(2, rows + 2):
                 tzefi_meuhad.append(0)
         self.df[u'צפי מאוחד'] = tzefi_meuhad
-
 
     def set_3_last_notes(self):
         rows = len(self.df.index)
@@ -89,7 +164,6 @@ class GviaMonthReport(object):
                 last_3_notes = last_3_notes + date + note
             self.df[u'הערות מגיליון הגביה'][row] = last_3_notes
 
-
     def arrange_col_order(self):
         self.df = self.df[[u'צוות', u'שם לקוח', u'אמצעי תשלום', u'סוג לקוח', u'לקוח משפטי', u'תשלום ייעוץ חודשי',
                            u'תשלום על בונוס', u'תשלומים מיוחדים', u'מספר התשלומים מעבר לאשראי',
@@ -104,8 +178,6 @@ class GviaMonthReport(object):
         self.change_type_of_col_to_int(u'תשלום על בונוס')
         self.change_type_of_col_to_int(u'תשלומים מיוחדים')
         self.change_type_of_col_to_int(u'סכום התשלומים מעבר לאשראי')
-
-
 
     def add_mid_sums(self):
         rows = len(self.df.index)
@@ -137,7 +209,8 @@ class GviaMonthReport(object):
         sum_of_month_over_credit = '=SUM(J{first_index}:J{last_index})'.format(first_index=index1, last_index=index2)
         sum_of_bonus = '=SUM(M{first_index}:M{last_index})'.format(first_index=index1, last_index=index2)
         sum_of_month_zefi = '=SUM(N{first_index}:N{last_index})'.format(first_index=index1, last_index=index2)
-        sum_of_extra_payments_for_month = '=SUM(O{first_index}:O{last_index})'.format(first_index=index1, last_index=index2)
+        sum_of_extra_payments_for_month = '=SUM(O{first_index}:O{last_index})'.format(first_index=index1,
+                                                                                      last_index=index2)
         sum_of_zefi_meuhad = '=SUM(P{first_index}:P{last_index})'.format(first_index=index1, last_index=index2)
         new_sum_line = pd.DataFrame({u'צוות': [team], u'שם לקוח': [u'סיכום לצוות {team}'.format(team=team)],
                                      u'אמצעי תשלום': [""], u'סוג לקוח': [""], u'לקוח משפטי': [""],
@@ -155,10 +228,6 @@ class GviaMonthReport(object):
         new_df.sort_index()
         self.df = new_df
         self.rows_of_sum.append(last_index + 1)
-
-    def apply_style_on_sum_rows(self, sf):
-        for row in self.rows_of_sum:
-            sf.apply_style_by_indexes(indexes_to_style=[sf.index[row]], bg_color=colors.yellow, bold=True)
 
     def add_total_row(self):
         sum_of_month_consultation = '='
@@ -259,7 +328,8 @@ class GviaMonthReport(object):
                 year=df['Bonus End Date'][row].year, month=df['Bonus End Date'][row].month,
                 day=df['Bonus End Date'][row].day)
             if df['Pay'][row] and df['NumPay'][row] is not None and df['NumPay'][row] != 0 and \
-                                    last_agreement_bonus_begin_date <= df['DateP'][row] <= last_agreement_bonus_end_date:
+                                    last_agreement_bonus_begin_date <= df['DateP'][
+                                row] <= last_agreement_bonus_end_date:
                 sum_pay += df['Pay'][row]
             if df['SumS'][row] is not None and not pd.isnull(df['DateInvoice'][row]) and \
                                     last_agreement_bonus_begin_date <= datetime.datetime(
@@ -283,7 +353,8 @@ class GviaMonthReport(object):
                     bonus_test = sum_efficiencies - (sum_pay * bonus_percent)
                     if bonus_test > 0 and df['bonus'][row]:
                         if '%' in df['bonus'][row]:
-                            dict_for_bonus[customer] = (bonus_test * float(df['bonus'][row][:-1]) / 100.0) / (1 + self.vat)
+                            dict_for_bonus[customer] = (bonus_test * float(df['bonus'][row][:-1]) / 100.0) / (
+                                1 + self.vat)
                             dict_for_dates[customer] = date
                         else:
                             dict_for_bonus[customer] = (bonus_test * float(df['bonus'][row]) / 100.0) / (1 + self.vat)
@@ -336,6 +407,113 @@ class GviaMonthReport(object):
         file_name = u'תכנון הצפי לחודש {month}-{year}.xlsx'.format(month=self.month, year=self.year)
         wb.save(file_name)
 
+    def set_gvia_month_report_style(self):
+        sf = StyleFrame(self.df)
+        dict = {u'צוות': 6.38, u'שם לקוח': 7, u'אמצעי תשלום': 6.63, u'סוג לקוח': 4.88,
+                u'לקוח משפטי': 6.38, u'תשלום ייעוץ חודשי': 9.63, u'תשלום על בונוס': 10.38,
+                u'תשלומים מיוחדים': 7.63, u'מספר התשלומים מעבר לאשראי': 9.5,
+                u'סכום התשלומים מעבר לאשראי': 9.63, u'הערות': 6.63,
+                u'תאריך נקודת הביקורת לבונוס': 8.63,
+                u'סכום הבונוס': 10.38, u'צפי לחודש': 10.25, u'תשלומים נוספים בחודש': 9.5,
+                u'צפי מאוחד': 9.38,
+                u'הערות מגיליון הגביה': 20.5}
+        dict = {key: value + 0.62 for key, value in dict.iteritems()}
+        sf.set_column_width_dict(col_width_dict=dict)
+        sf.set_row_height(range(1, len(self.df)), 71.25)
+        for row in self.rows_of_sum:
+            sf.apply_style_by_indexes(indexes_to_style=[sf.index[row]], bg_color=colors.yellow, bold=True)
+        return sf
+
+    def export_excel_file(self, sf):
+        file_name = u'תכנון הצפי לחודש {month}-{year}.xlsx'.format(month=self.month, year=self.year)
+        writer = StyleFrame.ExcelWriter(file_name)
+        sf.to_excel(excel_writer=writer, sheet_name=u'דוח גביה חודשי- לקוחות פעילים', right_to_left=True,
+                    row_to_add_filters=0,
+                    columns_and_rows_to_freeze='A2')
+        query_for_gvia_month_non_active_report = '''SELECT
+            NameTeam AS [צוות],
+            NameCustomer AS [שם לקוח],
+            MiddlePay AS [אמצעי תשלום],
+            AgreementKind AS [סוג לקוח],
+            CASE WHEN proceFinished=0 THEN 'כן' ELSE '' END AS [לקוח משפטי],
+            CASE WHEN Conditions='דולר' THEN ISNULL(PayDollar, 0)*4 ELSE ISNULL(PayDollar, 0) END AS [תשלום ייעוץ חודשי],
+            ISNULL(SumBonus,0) as [תשלום על בונוס],
+            ISNULL(SumSpecial,0) as [תשלומים מיוחדים],
+            ISNULL(NumOfDebt,0) as [מספר התשלומים מעבר לאשראי],
+            ISNULL(Debt,0) as [סכום התשלומים מעבר לאשראי],
+            ISNULL(Remark,'') as [הערות],
+            ISNULL(Text, '') AS [הערות מגיליון הגביה]
+          FROM
+            dbo.tblCustomers
+            LEFT JOIN
+            dbo.tblTeamList
+              ON dbo.tblCustomers.KodTeamCare = dbo.tblTeamList.KodTeamCare
+            LEFT JOIN
+            (SELECT * FROM
+              (
+                SELECT
+                  IDagreement,
+                  KodAgreementKind,
+                  KodCustomer,
+                  PayProcess,
+                  PayDollar,
+                  agreementFinish,
+                  row_number() OVER(PARTITION BY KodCustomer ORDER BY DateNew DESC) AS orderAgreementByDateDesc
+                FROM
+                  dbo.tblAgreementConditionAdvice
+              ) AS temp
+                WHERE temp.orderAgreementByDateDesc = 1) AS tblLastAgreements
+              ON dbo.tblCustomers.KodCustomer = tblLastAgreements.KodCustomer
+            LEFT JOIN tblJudicialProc
+              ON tblCustomers.KodCustomer = tblJudicialProc.kodCustomer
+            LEFT JOIN dbo.tblMiddlePay
+              ON tblLastAgreements.PayProcess = dbo.tblMiddlePay.KodMiddlePay
+            LEFT JOIN dbo.tblAgreementKind
+              ON dbo.tblAgreementKind.KodAgreementKind = tblLastAgreements.KodAgreementKind
+            LEFT JOIN (
+              SELECT DISTINCT NumR, Conditions,
+                SUM(CASE WHEN NumPay = 0 AND SumP-Pay>0 AND PayRemark LIKE '%בונוס%' THEN SumP-pay ELSE 0 END) OVER(PARTITION BY NumR) AS SumBonus,
+                SUM(CASE WHEN NumPay = 0 AND SumP-Pay>0  AND NOT PayRemark LIKE '%בונוס%' THEN SumP-pay ELSE 0 END) OVER(PARTITION BY NumR) AS SumSpecial,
+                SUM(CASE WHEN NumPay > 0 AND SumP-Pay>0  AND DatePay IS NULL AND (GETDATE() > (CASE
+               WHEN tblAgreementConditionAdvice.shotef = 1 THEN
+                 DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,
+                         DateAdd(DAY,-1, Cast(CONVERT(VARCHAR(10),DATEPART(MM, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103)
+                                              + '/' + '01/' + CONVERT(VARCHAR(10),DATEPART(YYYY, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103) AS DATETIME)))
+               ELSE
+                 DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,tblAgreementConditionAdvicePay.DateP)
+               END)) THEN 1 ELSE 0 END) OVER(PARTITION BY NumR) AS NumOfDebt,
+                SUM(CASE WHEN NumPay > 0 AND SumP-Pay>0  AND DatePay IS NULL AND (GETDATE() > (CASE
+               WHEN tblAgreementConditionAdvice.shotef = 1 THEN
+                 DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,
+                         DateAdd(DAY,-1, Cast(CONVERT(VARCHAR(10),DATEPART(MM, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103)
+                                              + '/' + '01/' + CONVERT(VARCHAR(10),DATEPART(YYYY, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103) AS DATETIME)))
+               ELSE
+                 DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,tblAgreementConditionAdvicePay.DateP)
+               END) ) THEN SumP ELSE 0 END) OVER(PARTITION BY NumR) AS Debt,
+                STUFF((SELECT ', ' + tblRemarks.PayRemark AS [text()]FROM dbo.tblAgreementConditionAdvicePay tblRemarks WHERE tblRemarks.NumR = dbo.tblAgreementConditionAdvicePay.NumR AND tblRemarks.NumPay = 0 AND SumP-Pay>0 FOR XML PATH('')), 1, 1, '' ) AS Remark
+              FROM dbo.tblAgreementConditionAdvicePay
+              LEFT JOIN dbo.tblAgreementConditionAdvice
+                ON dbo.tblAgreementConditionAdvice.IDagreement = dbo.tblAgreementConditionAdvicePay.NumR
+
+
+               )AS tblSumAllPay
+              ON tblLastAgreements.IDagreement = tblSumAllPay.NumR
+            LEFT JOIN (
+              SELECT KodCustomer, Text
+              FROM tbltaxes
+              ) tbltaxes
+              ON
+                dbo.tblCustomers.KodCustomer = tbltaxes.KodCustomer
+          WHERE CustomerStatus != 2
+          AND ((MONTH(getdate()) = 1 AND YEAR(closeCustomerDate) = YEAR(getdate()) - 1 AND MONTH(closeCustomerDate) = 12)
+              OR (MONTH(getdate()) != 1 AND YEAR(closeCustomerDate) = YEAR(getdate()) AND MONTH(closeCustomerDate) = MONTH(getdate()) - 1))
+          ORDER BY NameTeam'''
+        gvia_non_active = GviaMonthNonActiveReport(query_for_gvia_month_non_active_report)
+        sf = gvia_non_active.create_non_active_cutomers_gvia_month_report()
+        sf.to_excel(excel_writer=writer, sheet_name=u'גביה חודשי- לקוחות לא פעילים', right_to_left=True,
+                    row_to_add_filters=0,
+                    columns_and_rows_to_freeze='A2')
+        writer.save()
 
     def run_gvia_monthly_report(self):
         self.subtract_vat()
@@ -349,17 +527,19 @@ class GviaMonthReport(object):
         self.change_type_of_sums_col_to_int()
         self.change_type_of_col_to_int(u'מספר התשלומים מעבר לאשראי')
         self.add_mid_sums()
-        self.rows_of_sum.append(len(gvia_manager.df))
+        self.rows_of_sum.append(len(self.df))
         self.add_total_row()
         self.add_col_tzefi_for_month(1)
         self.add_col_additional_payments_for_month(1)
         self.add_col_tzefi_meuhad_for_month(1)
         self.arrange_col_order()
-        sf = StyleFrame(gvia_manager.df)
+        sf = self.set_gvia_month_report_style()
+        self.export_excel_file(sf)
+        self.change_types_of_cells()
 
 
 if __name__ == '__main__':
-    gvia_manager = GviaMonthReport(query_for_gvia_month_report)
+    gvia_manager = GviaMonthReport(9, 2016)
     gvia_manager.subtract_vat()
     gvia_manager.add_col_tzefi_for_month(0)
     gvia_manager.add_col_additional_payments_for_month(0)
@@ -376,37 +556,4 @@ if __name__ == '__main__':
     gvia_manager.add_col_additional_payments_for_month(1)
     gvia_manager.add_col_tzefi_meuhad_for_month(1)
     gvia_manager.arrange_col_order()
-    sf = StyleFrame(gvia_manager.df)
-    dict = {u'צוות': 6.38, u'שם לקוח': 7, u'אמצעי תשלום': 6.63, u'סוג לקוח': 4.88,
-                                             u'לקוח משפטי': 6.38, u'תשלום ייעוץ חודשי': 9.63, u'תשלום על בונוס': 10.38,
-                                             u'תשלומים מיוחדים': 7.63, u'מספר התשלומים מעבר לאשראי': 9.5,
-                                             u'סכום התשלומים מעבר לאשראי': 9.63, u'הערות': 6.63,
-                                             u'תאריך נקודת הביקורת לבונוס': 8.63,
-                                             u'סכום הבונוס': 10.38, u'צפי לחודש': 10.25, u'תשלומים נוספים בחודש': 9.5,
-                                             u'צפי מאוחד': 9.38,
-                                             u'הערות מגיליון הגביה': 20.5}
-    dict = {key: value + 0.62 for key, value in dict.iteritems()}
-    sf.set_column_width_dict(col_width_dict=dict)
-    sf.set_row_height(range(1, len(gvia_manager.df)), 71.25)
-    gvia_manager.apply_style_on_sum_rows(sf)
-    file_name = u'תכנון הצפי לחודש {month}-{year}.xlsx'.format(month=gvia_manager.month, year=gvia_manager.year)
-    writer = StyleFrame.ExcelWriter(file_name)
-    sf.to_excel(excel_writer=writer, sheet_name=u'דוח גביה חודשי- לקוחות פעילים', right_to_left=True, row_to_add_filters=0,
-                columns_and_rows_to_freeze='A2')
-    gvia_non_active = GviaMonthNonActiveReport(query_for_gvia_month_non_active_report)
-    sf = gvia_non_active.create_non_active_cutomers_gvia_month_report()
-    sf.to_excel(excel_writer=writer, sheet_name=u'גביה חודשי- לקוחות לא פעילים', right_to_left=True, row_to_add_filters=0,
-                columns_and_rows_to_freeze='A2')
-    writer.save()
     gvia_manager.change_types_of_cells()
-
-
-
-
-
-
-
-
-
-
-

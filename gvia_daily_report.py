@@ -11,8 +11,13 @@ from openpyxl.styles import Protection
 
 
 class GviaDaily(object):
-    def __init__(self, status, chosen_date):
+    def __init__(self, status, chosen_date, for_previous_month):
         self.chosen_date = chosen_date
+        self.for_previous_month = for_previous_month
+        self.year = str(chosen_date.year)
+        self.month = '0' + str(chosen_date.month) if chosen_date.month < 10 else str(chosen_date.month)
+        self.day = '0' + str(chosen_date.day) if chosen_date.day < 10 else str(chosen_date.day)
+
         # TODO: If you want to get report for different month(not the current) change MONTH(getdate()) in the query below
         query = '''SELECT
           ISNULL(NameTeam, taxTeam) AS [צוות],
@@ -71,13 +76,14 @@ class GviaDaily(object):
                       FROM dbo.tbltaxesPay
                         LEFT JOIN dbo.tblTeamList
                         ON dbo.tbltaxesPay.KodTeamCare = dbo.tblTeamList.KodTeamCare
-                      WHERE YEAR(DatePay) = YEAR(CAST('{day}/{month}/{year}}' as DATETIME)) AND MONTH(DatePay) = MONTH(CAST('{day}/{month}/{year}}' as DATETIME))
+                      WHERE YEAR(DatePay) = YEAR(CAST('{year}-{month}-{day} 00:00:00' AS DATETIME)) AND MONTH(DatePay) = MONTH(CAST('{year}-{month}-{day} 00:00:00' AS DATETIME))
                     ) taxesPay
             ON taxesPay.KodCustomer = dbo.tblCustomers.KodCustomer
         WHERE ((CustomerStatus = 2 OR (CustomerStatus != 2  AND taxesPay.taxsThisMonth = 1)))
         AND ((agreementFinish = 0 OR (CustomerStatus != 2  AND taxesPay.taxsThisMonth = 1)))
-        ORDER BY [צוות]'''.format(day=self.chosen_date.day, month=self.chosen_date.month, year=self.chosen_date.year)
+        ORDER BY [צוות]'''.format(day=self.day, month=self.month, year=self.year)
         self.manager = EsgServiceManager()
+        print query
         # self.day = datetime.datetime.today().day
         # self.month = datetime.datetime.today().month
         # self.year = datetime.datetime.today().year
@@ -105,6 +111,7 @@ class GviaDaily(object):
         self.df_from_month_report.index = range(len(self.df_from_month_report))
 
     def round_col_payment_for_month_consultation(self):
+        print self.df
         self.df[u'תשלום ייעוץ חודשי'] = self.df[u'תשלום ייעוץ חודשי'].apply(lambda x: round(x))
 
     def calc_month_tzefi(self):
@@ -440,7 +447,7 @@ class GviaDaily(object):
         writer.save()
 
     def create_report_for_each_team(self):
-        gvia_for_teams = GviaDaily('report for teams')
+        gvia_for_teams = GviaDaily('report for teams', self.chosen_date, self.for_previous_month)
         rows = len(self.df.index)
         team = self.df.iloc[0][u'צוות']
         first_index = 0
@@ -459,7 +466,7 @@ class GviaDaily(object):
                 last_index += 1
             else:
                 if self.df[u'צוות'][r + 1] != team:
-                    gvia_for_teams = GviaDaily('report for teams')
+                    gvia_for_teams = GviaDaily('report for teams', self.chosen_date, self.for_previous_month)
                     gvia_for_teams.df = self.df[first_index:last_index + 1]
                     gvia_for_teams.df.reset_index(drop=True)
                     file_name = u' דוח גביה יומי {day}-{month}-{year} צוות {team}.xlsx'.format(team=team,
@@ -500,7 +507,7 @@ class GviaDaily(object):
                                                                        year=self.chosen_date.year)
         files.append(file_name)
         # TODO: change mail_to to emails list!!!
-        mail_to = ['yakin@esg.co.il']
+        mail_to = ['yakin@esg.co.il', 'HaniP@esg.co.il', 'ortalb@esg.co.il']
         mail_from = ('ESG Server', 'server@esg.co.il')
         subject = u'דוח גביה יומי {day}-{month}-{year}'.format(day=self.chosen_date.day, month=self.chosen_date.month,
                                                                year=self.chosen_date.year)
@@ -516,12 +523,13 @@ class GviaDaily(object):
                                  'report_for_hani')
         self.create_report_for_each_team()
         self.change_types_of_cells()
-        self.send_mail_to_managers()
+        if not self.for_previous_month:
+            self.send_mail_to_managers()
 
 
 if __name__ == '__main__':
     current_date = datetime.date.today()
-    gvia_daily = GviaDaily('report_for_hani', current_date)
+    gvia_daily = GviaDaily('report_for_hani', current_date, False)
     gvia_daily.create_df()
     # gvia_daily.change_rows_for_positive_test()
     gvia_daily.create_separated_df(u' דוח גביה יומי {day}-{month}-{year}.xlsx'.format(day=current_date.day,
@@ -530,4 +538,4 @@ if __name__ == '__main__':
                                    'report_for_hani')
     gvia_daily.create_report_for_each_team()
     gvia_daily.change_types_of_cells()
-    gvia_daily.send_mail_to_managers()
+    # gvia_daily.send_mail_to_managers()

@@ -5,7 +5,9 @@ import datetime
 from flask import Flask, request
 from flask import send_file
 from werkzeug.utils import secure_filename
+from GviaMonthReport import GviaMonthReport
 from gvia_daily_report import GviaDaily
+from TotalGviaDailyReport import TotalGviaDailyReport
 from file_mangaer import FileManager
 
 app = Flask(__name__, static_folder='static_gvia_yadim')
@@ -42,17 +44,25 @@ def get_xl_file():
 
 @app.route('/api/v1/gvia-yadim-report/runDeparatmentReport/', methods=['POST'])
 def run_department_report():
-    day = request.form['day']
-    year = request.form['year']
-    month = request.form['month']
-    print day
-    print year
-    print month
-    # chosen_date = datetime.date(year, month, day)
-    # gvia_daily_report = GviaDaily('report_for_hani', chosen_date)
-    # gvia_daily_report.run_daily_report()
-
+    # try:
+    print "got here"
+    day = int(request.form['day'])
+    year = int(request.form['year'])
+    month = int(request.form['month'])
+    print day, type(day)
+    print month, type(month)
+    print year, type(year)
+    current_date = datetime.datetime(year, month, day)
+    gvia_month_report_handler = GviaMonthReport(month, year)
+    gvia_month_report_handler.run_gvia_monthly_report()
+    gvia_daily_report_handler = GviaDaily('report_for_hani', current_date, True)
+    gvia_daily_report_handler.run_daily_report()
+    gvia_total_report_handler = TotalGviaDailyReport(current_date, True)
+    gvia_total_report_handler.run_gvia_total_report()
     return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
+    # except Exception as e:
+    #     print "except"
+    #     return json.dumps({'error': str(e)}, 500, {'ContentType': 'application/json'})
 
 
 

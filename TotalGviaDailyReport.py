@@ -11,8 +11,12 @@ import os
 
 
 class TotalGviaDailyReport(object):
-    def __init__(self, chosen_date):
+    def __init__(self, chosen_date, for_previous_month):
+        self.for_previous_month = for_previous_month
         self.chosen_date = chosen_date
+        self.year = str(chosen_date.year)
+        self.month = '0' + str(chosen_date.month) if chosen_date.month < 10 else str(chosen_date.month)
+        self.day = '0' + str(chosen_date.day) if chosen_date.day < 10 else str(chosen_date.day)
         self.manager = EsgServiceManager()
         self.df = pd.DataFrame()
         self.rows_of_sum = []
@@ -21,9 +25,6 @@ class TotalGviaDailyReport(object):
         q = self.manager.db_service.search(query=query_for_vat)
         df_for_vat = pd.DataFrame.from_records(q)
         self.vat = df_for_vat['Tax'][len(df_for_vat) - 1]
-        # self.day = datetime.datetime.today().day
-        # self.month = datetime.datetime.today().month
-        # self.year = datetime.datetime.today().year
 
     def add_col_team(self):
         query = '''SELECT NameTeam [צוות]
@@ -98,8 +99,8 @@ class TotalGviaDailyReport(object):
             ON dbo.tblCustomers.KodTeamCare = dbo.tblTeamList.KodTeamCare
         INNER JOIN dbo.tblAgreementConditionAdvice
             ON dbo.tblAgreementConditionAdvice.KodCustomer = dbo.tblCustomers.KodCustomer
-          WHERE YEAR(DateFU) = YEAR(CAST('{day}/{month}/{year}}' as DATETIME)) AND MONTH(DateFU) = MONTH(CAST('{day}/{month}/{year}}' as DATETIME))
-        ORDER BY NameTeam'''.format(day=self.chosen_date.day, month=self.chosen_date.month, year=self.chosen_date.year)
+          WHERE YEAR(DateFU) = YEAR(CAST('{year}-{month}-{day} 00:00:00' as DATETIME)) AND MONTH(DateFU) = MONTH(CAST('{year}-{month}-{day} 00:00:00' as DATETIME))
+        ORDER BY NameTeam'''.format(day=self.day, month=self.month, year=self.year)
         q = self.manager.db_service.search(query=query)
         self.df_from_sql_for_gvia_megvia_and_tzefi = pd.DataFrame.from_records(q)
 
@@ -136,7 +137,7 @@ class TotalGviaDailyReport(object):
         # TODO: If you want to get last month report, change the month below:
         query = '''SELECT *
         FROM dbo.tblMonthlyTarget
-        WHERE year = YEAR(getdate())AND month = MONTH(CAST('{day}/{month}/{year}}' as DATETIME))'''.format(day=self.chosen_date.day, month=self.chosen_date.month, year=self.chosen_date.year)
+        WHERE year = YEAR(CAST('{year}-{month}-{day} 00:00:00' as DATETIME)) AND month = MONTH(CAST('{year}-{month}-{day} 00:00:00' as DATETIME))'''.format(day=self.day, month=self.month, year=self.year)
         q = self.manager.db_service.search(query=query)
         df = pd.DataFrame.from_records(q)
         for index in list_of_indexes_for_teams_targets:
@@ -344,7 +345,7 @@ class TotalGviaDailyReport(object):
         writer.save()
 
 
-    def run_monthly_report(self):
+    def run_gvia_total_report(self):
         self.add_col_team()
         self.add_gvia_cols_for_3_kinds_of_customers()
         self.add_col_total_gvia()
@@ -360,15 +361,17 @@ class TotalGviaDailyReport(object):
         self.order_columns()
         self.create_final_excel_file()
         self.change_types_of_cells()
-        self.send_mail_for_each_team()
-        self.send_mail_to_managers()
+        if not self.for_previous_month:
+            self.send_mail_for_each_team()
+            self.send_mail_to_managers()
 
 
 
 
 if __name__ == '__main__':
 
-    gvia_teams = TotalGviaDailyReport()
+    chosen_date = datetime.datetime.now()
+    gvia_teams = TotalGviaDailyReport(chosen_date, False)
     gvia_teams.add_col_team()
     gvia_teams.add_gvia_cols_for_3_kinds_of_customers()
     gvia_teams.add_col_total_gvia()
@@ -384,15 +387,15 @@ if __name__ == '__main__':
     gvia_teams.order_columns()
 
     sf = StyleFrame(gvia_teams.df)
-    writer = StyleFrame.ExcelWriter(u'דוח גביה יומי מחלקתי {day}-{month}-{year}.xlsx'.format(day=gvia_teams.day,
-                                                                                       month=gvia_teams.month,
-                                                                                       year=gvia_teams.year))
+    writer = StyleFrame.ExcelWriter(u'דוח גביה יומי מחלקתי {day}-{month}-{year}.xlsx'.format(day=gvia_teams.chosen_date.day,
+                                                                                       month=gvia_teams.chosen_date.month,
+                                                                                       year=gvia_teams.chosen_date.year))
     sf.to_excel(excel_writer=writer, sheet_name=u'דוח גביה יומי לפי צוותים', right_to_left=True, row_to_add_filters=0,
             columns_and_rows_to_freeze='A2')
     writer.save()
     gvia_teams.change_types_of_cells()
     gvia_teams.send_mail_for_each_team()
-    gvia_teams.send_mail_to_managers()
+    # gvia_teams.send_mail_to_managers()
 
 
 

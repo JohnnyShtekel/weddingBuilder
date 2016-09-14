@@ -24,8 +24,6 @@ class Root extends React.Component {
                     <Route path="/api/v1/gvia-yadim-report/upload-page/" component={UploadPage}/>
                 </Route>
             </Router>
-
-
         )
     }
 }

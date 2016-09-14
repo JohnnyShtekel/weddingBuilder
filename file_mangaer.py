@@ -10,6 +10,8 @@ from db_handler import DBHandler
 MANAGER_NAME = u'חני'
 MANAGER_ANSWER_ROW_KEY = u'הערות לחני/אורטל'
 EMPLOYEE_ANSWER_ROW_KEY = u'תשובות לחני/אורטל'
+# MANAGER_ANSWER_ROW_KEY = u'הערות חני'
+# EMPLOYEE_ANSWER_ROW_KEY = u'תשובות לחני'
 CUSTOMER_NAME_KEY_IN_OUTPUT_COMMENTS = 'customerName'
 CUSTOMER_NAME_KEY = u'שם לקוח'
 TEAM_NAME_KEY = u'צוות'
@@ -18,7 +20,6 @@ OLD_COMMENTS_KEY = u'הערות מגיליון הגביה'
 COMMENTS_KEY = 'comments'
 DATE = 'date'
 TEMP_FILE_NAME = "hst.txt"
-
 
 class FileManager(object):
     def __init__(self):

@@ -1,12 +1,10 @@
-// import '../../vendor/materialize/dist/js/materialize'
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { render } from 'react-dom';
-import createBrowserHistory from 'history/lib/createBrowserHistory';
-
 import App from '../js/components/entry'
 import Nav from '../js/components/nav'
 import DailyDepartmentReport from '../js/components/dailydepartmentreport'
+import WelcomePage from '../js/components/welcomepage'
 
 
 class Root extends React.Component {
@@ -21,8 +19,6 @@ class Root extends React.Component {
         );
     }
 }
-
-
 
 
 ReactDOM.render(<Root/>, document.getElementById('app'));

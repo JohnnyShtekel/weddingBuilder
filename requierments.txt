@@ -1,0 +1,14 @@
+git+https://gitlab.com/esg-dev/esg_service_manager.git
+Flask==0.10.1
+jdcal==1.2
+numpy==1.11.1
+openpyxl==2.2.5
+pandas==0.18.1
+pymssql==2.1.1
+python-dateutil==2.5.3
+pytz==2016.6.1
+requests==2.9.2
+six==1.10.0
+SQLAlchemy==1.0.8
+StyleFrame==0.1.4.2
+yanc==0.3.3

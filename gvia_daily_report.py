@@ -84,9 +84,6 @@ class GviaDaily(object):
         ORDER BY [צוות]'''.format(day=self.day, month=self.month, year=self.year)
         self.manager = EsgServiceManager()
         print query
-        # self.day = datetime.datetime.today().day
-        # self.month = datetime.datetime.today().month
-        # self.year = datetime.datetime.today().year
         # TODO: If you want to get report for different month(not the current) change file name below to the right file!
         month_report_file_name = u'תכנון הצפי לחודש {month}-{year}.xlsx'.format(month=self.chosen_date.month,
                                                                                 year=self.chosen_date.year)
@@ -528,7 +525,8 @@ class GviaDaily(object):
 
 
 if __name__ == '__main__':
-    current_date = datetime.datetime(2016,8,25)
+    current_date = datetime.datetime(2016,9,25)
+    current_date = datetime.datetime.now()
     gvia_daily = GviaDaily('report_for_hani', current_date, False)
     gvia_daily.create_df()
     # gvia_daily.change_rows_for_positive_test()
@@ -538,4 +536,4 @@ if __name__ == '__main__':
                                    'report_for_hani')
     gvia_daily.create_report_for_each_team()
     gvia_daily.change_types_of_cells()
-    # gvia_daily.send_mail_to_managers()
+    gvia_daily.send_mail_to_managers()

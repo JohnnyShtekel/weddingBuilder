@@ -44,21 +44,20 @@ def get_xl_file():
 
 @app.route('/api/v1/gvia-yadim-report/runDeparatmentReport/', methods=['POST'])
 def run_department_report():
-    # try:
-    day = int(request.form['day'])
-    year = int(request.form['year'])
-    month = int(request.form['month'])
-    current_date = datetime.datetime(year, month, day)
-    gvia_month_report_handler = GviaMonthReport(current_date)
-    gvia_month_report_handler.run_gvia_monthly_report()
-    gvia_daily_report_handler = GviaDaily('report_for_hani', current_date, True)
-    gvia_daily_report_handler.run_daily_report()
-    gvia_total_report_handler = TotalGviaDailyReport(current_date, True)
-    gvia_total_report_handler.run_gvia_total_report()
-    return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
-    # except Exception as e:
-    #     print "except"
-    #     return json.dumps({'error': str(e)}, 500, {'ContentType': 'application/json'})
+    try:
+        day = int(request.form['day'])
+        year = int(request.form['year'])
+        month = int(request.form['month'])
+        current_date = datetime.datetime(year, month, day)
+        gvia_month_report_handler = GviaMonthReport(current_date)
+        gvia_month_report_handler.run_gvia_monthly_report()
+        gvia_daily_report_handler = GviaDaily('report_for_hani', current_date, True)
+        gvia_daily_report_handler.run_daily_report()
+        gvia_total_report_handler = TotalGviaDailyReport(current_date, True)
+        gvia_total_report_handler.run_gvia_total_report()
+        return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
+    except Exception as e:
+        return json.dumps({'error': str(e)}, 500, {'ContentType': 'application/json'})
 
 
 

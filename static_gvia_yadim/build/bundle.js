@@ -92,7 +92,7 @@
 	                'div',
 	                { id: 'app-id' },
 	                _react2.default.createElement(_nav2.default, null),
-	                _react2.default.createElement(_dailydepartmentreport2.default, null)
+	                _react2.default.createElement(_entry2.default, null)
 	            );
 	        }
 	    }]);

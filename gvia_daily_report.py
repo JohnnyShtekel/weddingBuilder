@@ -528,7 +528,7 @@ class GviaDaily(object):
 
 
 if __name__ == '__main__':
-    current_date = datetime.date.today()
+    current_date = datetime.datetime(2016,8,25)
     gvia_daily = GviaDaily('report_for_hani', current_date, False)
     gvia_daily.create_df()
     # gvia_daily.change_rows_for_positive_test()

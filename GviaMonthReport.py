@@ -14,7 +14,12 @@ from openpyxl.styles import Alignment
 
 
 class GviaMonthReport(object):
-    def __init__(self, month, year):
+    def __init__(self, chosen_date):
+        self.chosen_date = chosen_date
+        self.year = str(chosen_date.year)
+        self.month = '0' + str(chosen_date.month) if chosen_date.month < 10 else str(chosen_date.month)
+        self.day = '0' + str(chosen_date.day) if chosen_date.day < 10 else str(chosen_date.day)
+
         query = '''SELECT
   NameTeam AS [צוות],
   NameCustomer AS [שם לקוח],
@@ -59,7 +64,7 @@ FROM
     SELECT DISTINCT NumR, Conditions,
       SUM(CASE WHEN NumPay = 0 AND SumP-Pay>0 AND PayRemark LIKE '%בונוס%' THEN SumP-pay ELSE 0 END) OVER(PARTITION BY NumR) AS SumBonus,
       SUM(CASE WHEN NumPay = 0 AND SumP-Pay>0  AND NOT PayRemark LIKE '%בונוס%' THEN SumP-pay ELSE 0 END) OVER(PARTITION BY NumR) AS SumSpecial,
-      SUM(CASE WHEN NumPay > 0 AND SumP-Pay>0  AND DatePay IS NULL AND (GETDATE() > (CASE
+      SUM(CASE WHEN NumPay > 0 AND SumP-Pay>0  AND DatePay IS NULL AND (CAST('{year}-{month}-{day} 00:00:00' AS DATETIME) > (CASE
      WHEN tblAgreementConditionAdvice.shotef = 1 THEN
        DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,
                DateAdd(DAY,-1, Cast(CONVERT(VARCHAR(10),DATEPART(MM, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103)
@@ -67,7 +72,7 @@ FROM
      ELSE
        DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,tblAgreementConditionAdvicePay.DateP)
      END)) THEN 1 ELSE 0 END) OVER(PARTITION BY NumR) AS NumOfDebt,
-      SUM(CASE WHEN NumPay > 0 AND SumP-Pay>0  AND DatePay IS NULL AND (GETDATE() > (CASE
+      SUM(CASE WHEN NumPay > 0 AND SumP-Pay>0  AND DatePay IS NULL AND (CAST('{year}-{month}-{day} 00:00:00' AS DATETIME) > (CASE
      WHEN tblAgreementConditionAdvice.shotef = 1 THEN
        DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,
                DateAdd(DAY,-1, Cast(CONVERT(VARCHAR(10),DATEPART(MM, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103)
@@ -91,7 +96,7 @@ FROM
       dbo.tblCustomers.KodCustomer = tbltaxes.KodCustomer
 WHERE CustomerStatus = 2
 AND agreementFinish = 0
-ORDER BY NameTeam'''
+ORDER BY NameTeam'''.format(day=self.day, year=self.year, month=self.month)
         self.manager = EsgServiceManager()
         self.df = pd.DataFrame.from_records(self.manager.db_service.search(query=query))
         self.rows_of_sum = []
@@ -99,8 +104,6 @@ ORDER BY NameTeam'''
         q = self.manager.db_service.search(query=query_for_vat)
         df_for_vat = pd.DataFrame.from_records(q)
         self.vat = df_for_vat['Tax'][len(df_for_vat) - 1]
-        self.month = month
-        self.year = year
 
     def subtract_vat(self):
         self.df[u'תשלום על בונוס'] = self.df[u'תשלום על בונוס'].apply(lambda x: x / (1 + self.vat))
@@ -387,7 +390,7 @@ ORDER BY NameTeam'''
                                   dict_for_dates.get(self.df.iloc[index][u'שם לקוח']))
 
     def change_types_of_cells(self):
-        wb = load_workbook(u'תכנון הצפי לחודש {month}-{year}.xlsx'.format(month=self.month, year=self.year))
+        wb = load_workbook(u'תכנון הצפי לחודש {month}-{year}.xlsx'.format(month=self.chosen_date.month, year=self.chosen_date.year))
         ws = wb.active
         for i in range(2, len(self.df) + 2):
             ws['F{i}'.format(i=i)].number_format = '#,###'
@@ -404,7 +407,7 @@ ORDER BY NameTeam'''
                 if not cell.protection.locked:
                     cell.protection = Protection(locked=True)
 
-        file_name = u'תכנון הצפי לחודש {month}-{year}.xlsx'.format(month=self.month, year=self.year)
+        file_name = u'תכנון הצפי לחודש {month}-{year}.xlsx'.format(month=self.chosen_date.month, year=self.chosen_date.year)
         wb.save(file_name)
 
     def set_gvia_month_report_style(self):
@@ -425,7 +428,7 @@ ORDER BY NameTeam'''
         return sf
 
     def export_excel_file(self, sf):
-        file_name = u'תכנון הצפי לחודש {month}-{year}.xlsx'.format(month=self.month, year=self.year)
+        file_name = u'תכנון הצפי לחודש {month}-{year}.xlsx'.format(month=self.chosen_date.month, year=self.chosen_date.year)
         writer = StyleFrame.ExcelWriter(file_name)
         sf.to_excel(excel_writer=writer, sheet_name=u'דוח גביה חודשי- לקוחות פעילים', right_to_left=True,
                     row_to_add_filters=0,
@@ -474,7 +477,7 @@ ORDER BY NameTeam'''
               SELECT DISTINCT NumR, Conditions,
                 SUM(CASE WHEN NumPay = 0 AND SumP-Pay>0 AND PayRemark LIKE '%בונוס%' THEN SumP-pay ELSE 0 END) OVER(PARTITION BY NumR) AS SumBonus,
                 SUM(CASE WHEN NumPay = 0 AND SumP-Pay>0  AND NOT PayRemark LIKE '%בונוס%' THEN SumP-pay ELSE 0 END) OVER(PARTITION BY NumR) AS SumSpecial,
-                SUM(CASE WHEN NumPay > 0 AND SumP-Pay>0  AND DatePay IS NULL AND (GETDATE() > (CASE
+                SUM(CASE WHEN NumPay > 0 AND SumP-Pay>0  AND DatePay IS NULL AND (CAST('{year}-{month}-{day} 00:00:00' AS DATETIME) > (CASE
                WHEN tblAgreementConditionAdvice.shotef = 1 THEN
                  DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,
                          DateAdd(DAY,-1, Cast(CONVERT(VARCHAR(10),DATEPART(MM, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103)
@@ -482,7 +485,7 @@ ORDER BY NameTeam'''
                ELSE
                  DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,tblAgreementConditionAdvicePay.DateP)
                END)) THEN 1 ELSE 0 END) OVER(PARTITION BY NumR) AS NumOfDebt,
-                SUM(CASE WHEN NumPay > 0 AND SumP-Pay>0  AND DatePay IS NULL AND (GETDATE() > (CASE
+                SUM(CASE WHEN NumPay > 0 AND SumP-Pay>0  AND DatePay IS NULL AND (CAST('{year}-{month}-{day} 00:00:00' AS DATETIME) > (CASE
                WHEN tblAgreementConditionAdvice.shotef = 1 THEN
                  DateAdd(DAY, tblAgreementConditionAdvice.ashray+1,
                          DateAdd(DAY,-1, Cast(CONVERT(VARCHAR(10),DATEPART(MM, DateAdd(month,1,tblAgreementConditionAdvicePay.DateP)),103)
@@ -505,9 +508,9 @@ ORDER BY NameTeam'''
               ON
                 dbo.tblCustomers.KodCustomer = tbltaxes.KodCustomer
           WHERE CustomerStatus != 2
-          AND ((MONTH(getdate()) = 1 AND YEAR(closeCustomerDate) = YEAR(getdate()) - 1 AND MONTH(closeCustomerDate) = 12)
-              OR (MONTH(getdate()) != 1 AND YEAR(closeCustomerDate) = YEAR(getdate()) AND MONTH(closeCustomerDate) = MONTH(getdate()) - 1))
-          ORDER BY NameTeam'''
+          AND ((MONTH(CAST('{year}-{month}-{day} 00:00:00' AS DATETIME)) = 1 AND YEAR(closeCustomerDate) = YEAR(CAST('{year}-{month}-{day} 00:00:00' AS DATETIME)) - 1 AND MONTH(closeCustomerDate) = 12)
+              OR (MONTH(CAST('{year}-{month}-{day} 00:00:00' AS DATETIME)) != 1 AND YEAR(closeCustomerDate) = YEAR(CAST('{year}-{month}-{day} 00:00:00' AS DATETIME)) AND MONTH(closeCustomerDate) = MONTH(CAST('{year}-{month}-{day} 00:00:00' AS DATETIME)) - 1))
+          ORDER BY NameTeam'''.format(year=self.year, day=self.day, month=self.month)
         gvia_non_active = GviaMonthNonActiveReport(query_for_gvia_month_non_active_report)
         sf = gvia_non_active.create_non_active_cutomers_gvia_month_report()
         sf.to_excel(excel_writer=writer, sheet_name=u'גביה חודשי- לקוחות לא פעילים', right_to_left=True,
@@ -539,7 +542,7 @@ ORDER BY NameTeam'''
 
 
 if __name__ == '__main__':
-    gvia_manager = GviaMonthReport(9, 2016)
+    gvia_manager = GviaMonthReport(datetime.datetime(2016,8,25))
     gvia_manager.subtract_vat()
     gvia_manager.add_col_tzefi_for_month(0)
     gvia_manager.add_col_additional_payments_for_month(0)
@@ -556,4 +559,6 @@ if __name__ == '__main__':
     gvia_manager.add_col_additional_payments_for_month(1)
     gvia_manager.add_col_tzefi_meuhad_for_month(1)
     gvia_manager.arrange_col_order()
+    sf = gvia_manager.set_gvia_month_report_style()
+    gvia_manager.export_excel_file(sf)
     gvia_manager.change_types_of_cells()

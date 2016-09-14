@@ -91,41 +91,42 @@ class TotalGviaDailyReport(object):
 
     def get_df_from_sql_for_gvia_megvia_and_tzefi(self):
         # TODO: If you want to get last month report, change the month below:
-        query = '''SELECT PaySuccessFU, PaySuccessFUTeam, DateFU, dbo.tblCustomers.KodCustomer, NameCustomer,NameTeam
-          FROM dbo.tbltaxes
-          INNER JOIN dbo.tblCustomers
-            ON dbo.tbltaxes.KodCustomer = dbo.tblCustomers.KodCustomer
-          INNER JOIN dbo.tblTeamList
-            ON dbo.tblCustomers.KodTeamCare = dbo.tblTeamList.KodTeamCare
-        INNER JOIN dbo.tblAgreementConditionAdvice
-            ON dbo.tblAgreementConditionAdvice.KodCustomer = dbo.tblCustomers.KodCustomer
-          WHERE YEAR(DateFU) = YEAR(CAST('{year}-{month}-{day} 00:00:00' as DATETIME)) AND MONTH(DateFU) = MONTH(CAST('{year}-{month}-{day} 00:00:00' as DATETIME))
-        ORDER BY NameTeam'''.format(day=self.day, month=self.month, year=self.year)
-        print query
-        q = self.manager.db_service.search(query=query)
-        self.df_from_sql_for_gvia_megvia_and_tzefi = pd.DataFrame.from_records(q)
-        print self.df_from_sql_for_gvia_megvia_and_tzefi
+        if not self.for_previous_month:
+            query = '''SELECT PaySuccessFU, PaySuccessFUTeam, DateFU, dbo.tblCustomers.KodCustomer, NameCustomer,NameTeam
+              FROM dbo.tbltaxes
+              INNER JOIN dbo.tblCustomers
+                ON dbo.tbltaxes.KodCustomer = dbo.tblCustomers.KodCustomer
+              INNER JOIN dbo.tblTeamList
+                ON dbo.tblCustomers.KodTeamCare = dbo.tblTeamList.KodTeamCare
+            INNER JOIN dbo.tblAgreementConditionAdvice
+                ON dbo.tblAgreementConditionAdvice.KodCustomer = dbo.tblCustomers.KodCustomer
+              WHERE YEAR(DateFU) = YEAR(CAST('{year}-{month}-{day} 00:00:00' as DATETIME)) AND MONTH(DateFU) = MONTH(CAST('{year}-{month}-{day} 00:00:00' as DATETIME))
+            ORDER BY NameTeam'''.format(day=self.day, month=self.month, year=self.year)
+            q = self.manager.db_service.search(query=query)
+            self.df_from_sql_for_gvia_megvia_and_tzefi = pd.DataFrame.from_records(q)
 
     def add_col_gvia_from_gvia(self):
-        df = (self.df_from_sql_for_gvia_megvia_and_tzefi.groupby('NameTeam').PaySuccessFU.sum()).reset_index()
-        df['PaySuccessFU'] = df['PaySuccessFU'].apply(lambda x: x / (1 + self.vat))
-        dict_for_consultation = df.set_index('NameTeam')['PaySuccessFU'].to_dict()
-        self.df[u'גביה מהגביה'] = np.nan
-        for row in range(0, len(self.df)):
-            if self.df[u'צוות'][row] in dict_for_consultation.keys():
-                self.df.set_value(row, u'גביה מהגביה',
-                                  round(dict_for_consultation.get(self.df[u'צוות'][row])))
+        if not self.for_previous_month:
+            df = (self.df_from_sql_for_gvia_megvia_and_tzefi.groupby('NameTeam').PaySuccessFU.sum()).reset_index()
+            df['PaySuccessFU'] = df['PaySuccessFU'].apply(lambda x: x / (1 + self.vat))
+            dict_for_consultation = df.set_index('NameTeam')['PaySuccessFU'].to_dict()
+            self.df[u'גביה מהגביה'] = np.nan
+            for row in range(0, len(self.df)):
+                if self.df[u'צוות'][row] in dict_for_consultation.keys():
+                    self.df.set_value(row, u'גביה מהגביה',
+                                      round(dict_for_consultation.get(self.df[u'צוות'][row])))
 
 
     def add_col_tzefi_from_gvia(self):
-        df = (self.df_from_sql_for_gvia_megvia_and_tzefi.groupby('NameTeam').PaySuccessFUTeam.sum()).reset_index()
-        df['PaySuccessFUTeam'] = df['PaySuccessFUTeam'].apply(lambda x: x / (1 + self.vat))
-        dict_for_consultation = df.set_index('NameTeam')['PaySuccessFUTeam'].to_dict()
-        self.df[u'צפי של הגביה / צוות'] = np.nan
-        for row in range(0, len(self.df)):
-            if self.df[u'צוות'][row] in dict_for_consultation.keys():
-                self.df.set_value(row, u'צפי של הגביה / צוות',
-                                  round(dict_for_consultation.get(self.df[u'צוות'][row])))
+        if not self.for_previous_month:
+            df = (self.df_from_sql_for_gvia_megvia_and_tzefi.groupby('NameTeam').PaySuccessFUTeam.sum()).reset_index()
+            df['PaySuccessFUTeam'] = df['PaySuccessFUTeam'].apply(lambda x: x / (1 + self.vat))
+            dict_for_consultation = df.set_index('NameTeam')['PaySuccessFUTeam'].to_dict()
+            self.df[u'צפי של הגביה / צוות'] = np.nan
+            for row in range(0, len(self.df)):
+                if self.df[u'צוות'][row] in dict_for_consultation.keys():
+                    self.df.set_value(row, u'צפי של הגביה / צוות',
+                                      round(dict_for_consultation.get(self.df[u'צוות'][row])))
 
     def add_col_total_gvia_plus_tzefi_gvia_team(self):
         list_for_column = []
@@ -158,15 +159,25 @@ class TotalGviaDailyReport(object):
             self.df[u'אחוז ביצוע כולל צפי'][row] = "=(IF(I{row}>0,H{row}/I{row},0))".format(row=row + 2)
 
     def add_row_for_yesum(self):
-        formula = "=SUM(({col}2:{col}5),({col}8,{col}10))"
-        new_yesum_row = pd.DataFrame({u'צוות': [u'סה"כ יישום'], u'גביה מרגיל': [formula.format(col='B')],
-                          u'גביה מייעוץ': [formula.format(col='C')], u'גביה מפרויקטלי': [formula.format(col='D')],
-                          u'גביה כוללת': [formula.format(col='E')], u'גביה מהגביה': [formula.format(col='F')],
-                          u'צפי של הגביה / צוות': [formula.format(col='G')],
-                          u'גביה כוללת + צפי של הגבייה / צוות': [formula.format(col='H')],
-                          u'יעד': [formula.format(col='I')], u'אחוז ביצוע': ["=(IF(I11>0,E11/I11,0))"],
-                          u'אחוז ביצוע כולל צפי': ["=(IF(I11>0,H11/I11,0))"]})
-        self.df = concat([self.df, new_yesum_row]).reset_index(drop=True)
+        if not self.for_previous_month:
+            formula = "=SUM(({col}2:{col}5),({col}8,{col}10))"
+            new_yesum_row = pd.DataFrame({u'צוות': [u'סה"כ יישום'], u'גביה מרגיל': [formula.format(col='B')],
+                              u'גביה מייעוץ': [formula.format(col='C')], u'גביה מפרויקטלי': [formula.format(col='D')],
+                              u'גביה כוללת': [formula.format(col='E')], u'גביה מהגביה': [formula.format(col='F')],
+                              u'צפי של הגביה / צוות': [formula.format(col='G')],
+                              u'גביה כוללת + צפי של הגבייה / צוות': [formula.format(col='H')],
+                              u'יעד': [formula.format(col='I')], u'אחוז ביצוע': ["=(IF(I11>0,E11/I11,0))"],
+                              u'אחוז ביצוע כולל צפי': ["=(IF(I11>0,H11/I11,0))"]})
+            self.df = concat([self.df, new_yesum_row]).reset_index(drop=True)
+        else:
+            formula = "=SUM(({col}2:{col}5),({col}8,{col}10))"
+            new_yesum_row = pd.DataFrame({u'צוות': [u'סה"כ יישום'], u'גביה מרגיל': [formula.format(col='B')],
+                              u'גביה מייעוץ': [formula.format(col='C')], u'גביה מפרויקטלי': [formula.format(col='D')],
+                              u'גביה כוללת': [formula.format(col='E')],
+                              u'גביה כוללת + צפי של הגבייה / צוות': [formula.format(col='H')],
+                              u'יעד': [formula.format(col='I')], u'אחוז ביצוע': ["=(IF(I11>0,E11/I11,0))"],
+                              u'אחוז ביצוע כולל צפי': ["=(IF(I11>0,H11/I11,0))"]})
+            self.df = concat([self.df, new_yesum_row]).reset_index(drop=True)
 
     def add_row_for_gvia(self):
         df = self.get_paid_payment_for_consultation_and_gvia_from_excel_daily_report()
@@ -183,23 +194,37 @@ class TotalGviaDailyReport(object):
             elif df[u'סוג לקוח'][row] == u'פרוייקטלי':
                 project_sum += df[u'תשלום ששולם עד היום לגביה'][row]
         formula = "=SUM({col}2:{col}10)"
-        new_gvia_row = pd.DataFrame({u'צוות': [u'סה"כ גביה'], u'גביה מרגיל': [regular_sum],
-                                      u'גביה מייעוץ': [consultation_sum],
-                                      u'גביה מפרויקטלי': [project_sum],
-                                      u'גביה כוללת': ["=B12+C12+D12"],
-                                      u'גביה מהגביה': [formula.format(col='F')],
-                                      u'צפי של הגביה / צוות': [formula.format(col='G')],
-                                      u'גביה כוללת + צפי של הגבייה / צוות': [formula.format(col='H')],
-                                      u'יעד': [formula.format(col='I')], u'אחוז ביצוע': ["=(IF(I12>0,E12/I12,0))"],
-                                      u'אחוז ביצוע כולל צפי': ["=(IF(I12>0,H12/I12,0))"]})
+        if not self.for_previous_month:
+            new_gvia_row = pd.DataFrame({u'צוות': [u'סה"כ גביה'], u'גביה מרגיל': [regular_sum],
+                                          u'גביה מייעוץ': [consultation_sum],
+                                          u'גביה מפרויקטלי': [project_sum],
+                                          u'גביה כוללת': ["=B12+C12+D12"],
+                                          u'גביה מהגביה': [formula.format(col='F')],
+                                          u'צפי של הגביה / צוות': [formula.format(col='G')],
+                                          u'גביה כוללת + צפי של הגבייה / צוות': [formula.format(col='H')],
+                                          u'יעד': [formula.format(col='I')], u'אחוז ביצוע': ["=(IF(I12>0,E12/I12,0))"],
+                                          u'אחוז ביצוע כולל צפי': ["=(IF(I12>0,H12/I12,0))"]})
+        else:
+            new_gvia_row = pd.DataFrame({u'צוות': [u'סה"כ גביה'], u'גביה מרגיל': [regular_sum],
+                                          u'גביה מייעוץ': [consultation_sum],
+                                          u'גביה מפרויקטלי': [project_sum],
+                                          u'גביה כוללת': ["=B12+C12+D12"],
+                                          u'גביה כוללת + צפי של הגבייה / צוות': [formula.format(col='H')],
+                                          u'יעד': [formula.format(col='I')], u'אחוז ביצוע': ["=(IF(I12>0,E12/I12,0))"],
+                                          u'אחוז ביצוע כולל צפי': ["=(IF(I12>0,H12/I12,0))"]})
         self.df = concat([self.df, new_gvia_row]).reset_index(drop=True)
 
 
 
     def order_columns(self):
-        self.df = self.df[[u'צוות', u'גביה מרגיל', u'גביה מייעוץ', u'גביה מפרויקטלי', u'גביה כוללת', u'גביה מהגביה',
-                           u'צפי של הגביה / צוות', u'גביה כוללת + צפי של הגבייה / צוות', u'יעד', u'אחוז ביצוע',
-                           u'אחוז ביצוע כולל צפי']]
+        if not self.for_previous_month:
+            self.df = self.df[[u'צוות', u'גביה מרגיל', u'גביה מייעוץ', u'גביה מפרויקטלי', u'גביה כוללת', u'גביה מהגביה',
+                               u'צפי של הגביה / צוות', u'גביה כוללת + צפי של הגבייה / צוות', u'יעד', u'אחוז ביצוע',
+                               u'אחוז ביצוע כולל צפי']]
+        else:
+            self.df = self.df[[u'צוות', u'גביה מרגיל', u'גביה מייעוץ', u'גביה מפרויקטלי', u'גביה כוללת',
+                               u'גביה כוללת + צפי של הגבייה / צוות', u'יעד', u'אחוז ביצוע',
+                               u'אחוז ביצוע כולל צפי']]
 
     def change_types_of_cells(self):
         wb = load_workbook(u'דוח גביה יומי מחלקתי {day}-{month}-{year}.xlsx'.format(day=self.chosen_date.day, month=self.chosen_date.month,
@@ -258,81 +283,83 @@ class TotalGviaDailyReport(object):
         return team_df
 
     def send_mail_for_each_team(self):
-        teams_to_emails = {u'אודם': ['Ilyag@esg.co.il'], u'אודם+שנהב': ['roeeE@esg.co.il'], u'ברקת': ['yanivm@esg.co.il'],
-                           u'אלמוג': ['ZviL@esg.co.i'], u'קריסטל': ['davidme@esg.co.il'],
-                           u'טורקיז': ['Gils@esg.co.il'], u'טורקיז+ברקת': ['michalz@esg.co.il'], u'שנהב': ['elinorn@esg.co.il'],
-                           u'שוהם - שכר': ['yaelz@bsachar.co.il']}
-        df = pd.read_excel(u'דוח גביה יומי מחלקתי {day}-{month}-{year}.xlsx'.format(day=self.chosen_date.day, month=self.chosen_date.month,
-                                                                         year=self.chosen_date.year), convert_float=True,
-                      sheetname=u'דוח גביה יומי לפי צוותים')
-        for key in teams_to_emails:
-            files = []
-            if '+' in key:
-                team1 = key[:key.index('+')]
-                team2 = key[key.index('+') + 1:]
-                team_df1 = self.create_df_for_mail_team(team1)
-                team_df2 = self.create_df_for_mail_team(team2)
-                df_for_2_teams = concat([team_df1, team_df2])
-                df_for_2_teams.drop(df_for_2_teams.columns[[0, 1, 2]], axis=1, inplace=True)
-                template = df_for_2_teams.to_html()
-                style = u'''
-                    <style>
-                        table, th, td {
-                            border: 1px solid black;
-                            text-align: center;
-                            align: left;
-                        }
-                    </style>
-                '''
-                template = style + u'\n' + template
-                file_for_team1 = u' דוח גביה יומי {day}-{month}-{year} צוות {team}.xlsx'.format(team=team1, day=self.chosen_date.day,
-                                                                                           month=self.chosen_date.month,
-                                                                                           year=self.chosen_date.year)
-                file_for_team2 = u' דוח גביה יומי {day}-{month}-{year} צוות {team}.xlsx'.format(team=team2, day=self.chosen_date.day,
-                                                                                           month=self.chosen_date.month,
-                                                                                           year=self.chosen_date.year)
-                files.append(file_for_team1)
-                files.append(file_for_team2)
-            else:
-                team_df = self.create_df_for_mail_team(key)
-                team_df.drop(team_df.columns[[0, 1, 2]], axis=1, inplace=True)
-                template = team_df.to_html()
-                style = u'''
-                    <style>
-                        table, th, td {
-                            border: 1px solid black;
-                            text-align: center;
-                            align: left;
-                        }
-                    </style>
-                '''
-                template = style + u'\n' + template
-                file_name = u' דוח גביה יומי {day}-{month}-{year} צוות {team}.xlsx'.format(team=key, day=self.chosen_date.day,
-                                                                                           month=self.chosen_date.month,
-                                                                                           year=self.chosen_date.year)
-                files.append(file_name)
-            # TODO: change mail_to to emails list of the current key!!!
-            mail_to = ['yakin@esg.co.il']
-            mail_from = ('ESG Server', 'server@esg.co.il')
-            subject = u' דוח גביה יומי {day}-{month}-{year}'.format(day=self.chosen_date.day, month=self.chosen_date.month, year=self.chosen_date.year)
-            html = template
-            response = self.manager.mail_service.send_mail(mail_from=mail_from, mail_to=mail_to, files=files,
-                                                          subject=subject, html=html)
-            print response.content
+        if not self.for_previous_month:
+            teams_to_emails = {u'אודם': ['Ilyag@esg.co.il'], u'אודם+שנהב': ['roeeE@esg.co.il'], u'ברקת': ['yanivm@esg.co.il'],
+                               u'אלמוג': ['ZviL@esg.co.i'], u'קריסטל': ['davidme@esg.co.il'],
+                               u'טורקיז': ['Gils@esg.co.il'], u'טורקיז+ברקת': ['michalz@esg.co.il'], u'שנהב': ['elinorn@esg.co.il'],
+                               u'שוהם - שכר': ['yaelz@bsachar.co.il']}
+            df = pd.read_excel(u'דוח גביה יומי מחלקתי {day}-{month}-{year}.xlsx'.format(day=self.chosen_date.day, month=self.chosen_date.month,
+                                                                             year=self.chosen_date.year), convert_float=True,
+                          sheetname=u'דוח גביה יומי לפי צוותים')
+            for key in teams_to_emails:
+                files = []
+                if '+' in key:
+                    team1 = key[:key.index('+')]
+                    team2 = key[key.index('+') + 1:]
+                    team_df1 = self.create_df_for_mail_team(team1)
+                    team_df2 = self.create_df_for_mail_team(team2)
+                    df_for_2_teams = concat([team_df1, team_df2])
+                    df_for_2_teams.drop(df_for_2_teams.columns[[0, 1, 2]], axis=1, inplace=True)
+                    template = df_for_2_teams.to_html()
+                    style = u'''
+                        <style>
+                            table, th, td {
+                                border: 1px solid black;
+                                text-align: center;
+                                align: left;
+                            }
+                        </style>
+                    '''
+                    template = style + u'\n' + template
+                    file_for_team1 = u' דוח גביה יומי {day}-{month}-{year} צוות {team}.xlsx'.format(team=team1, day=self.chosen_date.day,
+                                                                                               month=self.chosen_date.month,
+                                                                                               year=self.chosen_date.year)
+                    file_for_team2 = u' דוח גביה יומי {day}-{month}-{year} צוות {team}.xlsx'.format(team=team2, day=self.chosen_date.day,
+                                                                                               month=self.chosen_date.month,
+                                                                                               year=self.chosen_date.year)
+                    files.append(file_for_team1)
+                    files.append(file_for_team2)
+                else:
+                    team_df = self.create_df_for_mail_team(key)
+                    team_df.drop(team_df.columns[[0, 1, 2]], axis=1, inplace=True)
+                    template = team_df.to_html()
+                    style = u'''
+                        <style>
+                            table, th, td {
+                                border: 1px solid black;
+                                text-align: center;
+                                align: left;
+                            }
+                        </style>
+                    '''
+                    template = style + u'\n' + template
+                    file_name = u' דוח גביה יומי {day}-{month}-{year} צוות {team}.xlsx'.format(team=key, day=self.chosen_date.day,
+                                                                                               month=self.chosen_date.month,
+                                                                                               year=self.chosen_date.year)
+                    files.append(file_name)
+                # TODO: change mail_to to emails list of the current key!!!
+                mail_to = ['yakin@esg.co.il']
+                mail_from = ('ESG Server', 'server@esg.co.il')
+                subject = u' דוח גביה יומי {day}-{month}-{year}'.format(day=self.chosen_date.day, month=self.chosen_date.month, year=self.chosen_date.year)
+                html = template
+                response = self.manager.mail_service.send_mail(mail_from=mail_from, mail_to=mail_to, files=files,
+                                                              subject=subject, html=html)
+                print response.content
 
     def send_mail_to_managers(self):
-        files = []
-        emails = ['roeeE@esg.co.il', 'michalz@esg.co.il', 'avi@esg.co.il', 'NatanF@esg.co.il', 'YakiN@esg.co.il',
-                  'rond@esg.co.il', 'HaniP@esg.co.il']
-        file_name = u'דוח גביה יומי מחלקתי {day}-{month}-{year}.xlsx'.format(day=self.chosen_date.day, month=self.chosen_date.month, year=self.chosen_date.year)
-        files.append(file_name)
-        # TODO: change mail_to to emails list!!!
-        mail_to = ['yakin@esg.co.il']
-        mail_from = ('ESG Server', 'server@esg.co.il')
-        subject = u' דוח גביה יומי לפי מחלקות {day}-{month}-{year}'.format(day=self.chosen_date.day, month=self.chosen_date.month, year=self.chosen_date.year)
-        response = self.manager.mail_service.send_mail(mail_from=mail_from, mail_to=mail_to, files=files,
-                                                           subject=subject, text=u'מצורף דוח גביה יומי לפי מחלקות')
-        print response.content
+        if not self.for_previous_month:
+            files = []
+            emails = ['roeeE@esg.co.il', 'michalz@esg.co.il', 'avi@esg.co.il', 'NatanF@esg.co.il', 'YakiN@esg.co.il',
+                      'rond@esg.co.il', 'HaniP@esg.co.il']
+            file_name = u'דוח גביה יומי מחלקתי {day}-{month}-{year}.xlsx'.format(day=self.chosen_date.day, month=self.chosen_date.month, year=self.chosen_date.year)
+            files.append(file_name)
+            # TODO: change mail_to to emails list!!!
+            mail_to = ['yakin@esg.co.il']
+            mail_from = ('ESG Server', 'server@esg.co.il')
+            subject = u' דוח גביה יומי לפי מחלקות {day}-{month}-{year}'.format(day=self.chosen_date.day, month=self.chosen_date.month, year=self.chosen_date.year)
+            response = self.manager.mail_service.send_mail(mail_from=mail_from, mail_to=mail_to, files=files,
+                                                               subject=subject, text=u'מצורף דוח גביה יומי לפי מחלקות')
+            print response.content
 
 
 
@@ -363,12 +390,13 @@ class TotalGviaDailyReport(object):
         self.add_row_for_yesum()
         self.add_row_for_gvia()
         self.order_columns()
-        reportName = self.create_final_excel_file()
+        report_name = self.create_final_excel_file()
         self.change_types_of_cells()
-        if not self.for_previous_month:
-            self.send_mail_for_each_team()
-            self.send_mail_to_managers()
-        return reportName
+        self.send_mail_for_each_team()
+        self.send_mail_to_managers()
+        self.send_mail_for_each_team()
+        self.send_mail_to_managers()
+        return report_name
 
 
 
@@ -399,8 +427,8 @@ if __name__ == '__main__':
             columns_and_rows_to_freeze='A2')
     writer.save()
     gvia_teams.change_types_of_cells()
-    # gvia_teams.send_mail_for_each_team()
-    # gvia_teams.send_mail_to_managers()
+    gvia_teams.send_mail_for_each_team()
+    gvia_teams.send_mail_to_managers()
 
 
 

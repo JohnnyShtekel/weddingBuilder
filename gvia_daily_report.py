@@ -83,10 +83,6 @@ class GviaDaily(object):
         AND ((agreementFinish = 0 OR (CustomerStatus != 2  AND taxesPay.taxsThisMonth = 1)))
         ORDER BY [צוות]'''.format(day=self.day, month=self.month, year=self.year)
         self.manager = EsgServiceManager()
-        print query
-        # self.day = datetime.datetime.today().day
-        # self.month = datetime.datetime.today().month
-        # self.year = datetime.datetime.today().year
         # TODO: If you want to get report for different month(not the current) change file name below to the right file!
         month_report_file_name = u'תכנון הצפי לחודש {month}-{year}.xlsx'.format(month=self.chosen_date.month,
                                                                                 year=self.chosen_date.year)
@@ -111,7 +107,6 @@ class GviaDaily(object):
         self.df_from_month_report.index = range(len(self.df_from_month_report))
 
     def round_col_payment_for_month_consultation(self):
-        print self.df
         self.df[u'תשלום ייעוץ חודשי'] = self.df[u'תשלום ייעוץ חודשי'].apply(lambda x: round(x))
 
     def calc_month_tzefi(self):
@@ -255,8 +250,8 @@ class GviaDaily(object):
         self.df[u'תאריך לביצוע'] = dates
 
     def add_cols_for_hani(self):
-        self.df[u'תשובות לחני'] = np.nan
-        self.df[u'הערות חני'] = np.nan
+        self.df[u'תשובות לחני/אורטל'] = np.nan
+        self.df[u'הערות לחני/אורטל'] = np.nan
 
     def add_col_notes_from_gvia_sheet(self):
         notes_for_column = []
@@ -303,7 +298,7 @@ class GviaDaily(object):
     def order_columns(self, df):
         df = df[[u'צוות', u'שם לקוח', u'סוג לקוח', u'לקוח משפטי', u'תשלום ייעוץ חודשי', u'צפי לחודש',
                  u'תשלום ששולם עד היום לייעוץ', u'צפי שנותר', u'תשלום ששולם עד היום לגביה', u'הערות מגיליון הגביה',
-                 u'הערות משורת החיוב בסטטוס', u'תאריך לביצוע', u'אמצעי תשלום', u'תשובות לחני', u'הערות חני']]
+                 u'הערות משורת החיוב בסטטוס', u'תאריך לביצוע', u'אמצעי תשלום', u'תשובות לחני/אורטל', u'הערות לחני/אורטל']]
         return df
 
     def add_mid_sums(self, df):
@@ -347,8 +342,8 @@ class GviaDaily(object):
                                      u'הערות מגיליון הגביה': [""], u'הערות משורת החיוב בסטטוס': [""],
                                      u'תאריך לביצוע': [""],
                                      u'אמצעי תשלום': [""],
-                                     u'תשובות לחני': [""],
-                                     u'הערות חני': [""]})
+                                     u'תשובות לחני/אורטל': [""],
+                                     u'הערות לחני/אורטל': [""]})
         new_df = concat([df.ix[:last_index], new_sum_line, df.ix[last_index + 1:]]).reset_index(drop=True)
         new_df.sort_index()
         self.rows_of_sum.append(last_index + 1)
@@ -381,8 +376,8 @@ class GviaDaily(object):
                                      u'הערות מגיליון הגביה': [""], u'הערות משורת החיוב בסטטוס': [""],
                                      u'תאריך לביצוע': [""],
                                      u'אמצעי תשלום': [""],
-                                     u'תשובות לחני': [""],
-                                     u'הערות חני': [""]})
+                                     u'תשובות לחני/אורטל': [""],
+                                     u'הערות לחני/אורטל': [""]})
         new_df = concat([df, new_sum_line]).reset_index(drop=True)
         return new_df
 
@@ -528,7 +523,7 @@ class GviaDaily(object):
 
 
 if __name__ == '__main__':
-    current_date = datetime.datetime(2016,8,25)
+    current_date = datetime.datetime(2016,9,25)
     current_date = datetime.datetime.now()
     gvia_daily = GviaDaily('report_for_hani', current_date, False)
     gvia_daily.create_df()
@@ -539,4 +534,4 @@ if __name__ == '__main__':
                                    'report_for_hani')
     gvia_daily.create_report_for_each_team()
     gvia_daily.change_types_of_cells()
-    # gvia_daily.send_mail_to_managers()
+    gvia_daily.send_mail_to_managers()

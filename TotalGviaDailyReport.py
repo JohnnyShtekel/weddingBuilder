@@ -338,13 +338,15 @@ class TotalGviaDailyReport(object):
 
     def create_final_excel_file(self):
         sf = StyleFrame(self.df)
-        writer = StyleFrame.ExcelWriter(u'דוח גביה יומי מחלקתי {day}-{month}-{year}.xlsx'.format(day=self.chosen_date.day,
+        reportName = u'דוח גביה יומי מחלקתי {day}-{month}-{year}.xlsx'.format(day=self.chosen_date.day,
                                                                                                  month=self.chosen_date.month,
-                                                                                                 year=self.chosen_date.year))
+                                                                                                 year=self.chosen_date.year)
+        writer = StyleFrame.ExcelWriter(reportName)
         sf.to_excel(excel_writer=writer, sheet_name=u'דוח גביה יומי לפי צוותים', right_to_left=True,
                     row_to_add_filters=0,
                     columns_and_rows_to_freeze='A2')
         writer.save()
+        return reportName
 
 
     def run_gvia_total_report(self):
@@ -361,11 +363,12 @@ class TotalGviaDailyReport(object):
         self.add_row_for_yesum()
         self.add_row_for_gvia()
         self.order_columns()
-        self.create_final_excel_file()
+        reportName = self.create_final_excel_file()
         self.change_types_of_cells()
         if not self.for_previous_month:
             self.send_mail_for_each_team()
             self.send_mail_to_managers()
+        return reportName
 
 
 

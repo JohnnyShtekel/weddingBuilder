@@ -23,6 +23,7 @@ export function uploadFile(files) {
                 success: function (data) {
                     document.getElementsByClassName('card-action')[0].style.display = "none";
                     Materialize.toast('עדכון קובץ בוצע בהצלחה', 4000);
+
                 },
                 error: function (data) {
                     document.getElementsByClassName('card-action')[0].style.display = "none";
@@ -49,9 +50,9 @@ function downloadCv(e) {
 export function RunDepartmentReport(day, month, year) {
 
     var form_data = new FormData(); // Creating object of FormData class
-    form_data.append('day',day);
-    form_data.append('month',month);
-    form_data.append('year',year);
+    form_data.append('day', day);
+    form_data.append('month', month);
+    form_data.append('year', year);
     document.getElementsByClassName('card-action')[0].style.display = "block";
 
     $.ajax({
@@ -62,14 +63,19 @@ export function RunDepartmentReport(day, month, year) {
         cache: false,
         processData: false,
         success: function (data) {
+            let jsonData =JSON.parse(data);
+            console.log(jsonData);
+            let file_name = jsonData.file_name;
             document.getElementsByClassName('card-action')[0].style.display = "none";
             Materialize.toast('פעולה עברה בהצלחה,נא פתח את הקובץ', 4000);
-            //let downloadRef = $('<a/>');
-            //downloadRef.attr({
-            //    href: '/api/v1/hr_app/download_file/',
-            //    target: '_blank',
-            //    download: 'דוח גבייה יומי מחלקתי - {}'
-            //})[0].click();
+
+            let downloadRef = $('<a/>');
+            downloadRef.attr({
+                href: '/api/v1/gvia-yadim-report/download_report/' + file_name + '/',
+                target: '_blank',
+                download: 'output.xlsx'
+            })[0].click();
+
         },
         error: function (data) {
             document.getElementsByClassName('card-action')[0].style.display = "none";

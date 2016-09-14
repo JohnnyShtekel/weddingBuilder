@@ -534,4 +534,4 @@ if __name__ == '__main__':
                                    'report_for_hani')
     gvia_daily.create_report_for_each_team()
     gvia_daily.change_types_of_cells()
-    # gvia_daily.send_mail_to_managers()
+    gvia_daily.send_mail_to_managers()

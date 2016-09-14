@@ -101,10 +101,8 @@ class TotalGviaDailyReport(object):
             ON dbo.tblAgreementConditionAdvice.KodCustomer = dbo.tblCustomers.KodCustomer
           WHERE YEAR(DateFU) = YEAR(CAST('{year}-{month}-{day} 00:00:00' as DATETIME)) AND MONTH(DateFU) = MONTH(CAST('{year}-{month}-{day} 00:00:00' as DATETIME))
         ORDER BY NameTeam'''.format(day=self.day, month=self.month, year=self.year)
-        print query
         q = self.manager.db_service.search(query=query)
         self.df_from_sql_for_gvia_megvia_and_tzefi = pd.DataFrame.from_records(q)
-        print self.df_from_sql_for_gvia_megvia_and_tzefi
 
     def add_col_gvia_from_gvia(self):
         df = (self.df_from_sql_for_gvia_megvia_and_tzefi.groupby('NameTeam').PaySuccessFU.sum()).reset_index()
@@ -396,8 +394,8 @@ if __name__ == '__main__':
             columns_and_rows_to_freeze='A2')
     writer.save()
     gvia_teams.change_types_of_cells()
-    # gvia_teams.send_mail_for_each_team()
-    # gvia_teams.send_mail_to_managers()
+    gvia_teams.send_mail_for_each_team()
+    gvia_teams.send_mail_to_managers()
 
 
 

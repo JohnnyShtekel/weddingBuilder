@@ -250,8 +250,8 @@ class GviaDaily(object):
         self.df[u'תאריך לביצוע'] = dates
 
     def add_cols_for_hani(self):
-        self.df[u'תשובות לחני'] = np.nan
-        self.df[u'הערות חני'] = np.nan
+        self.df[u'תשובות לחני/אורטל'] = np.nan
+        self.df[u'הערות לחני/אורטל'] = np.nan
 
     def add_col_notes_from_gvia_sheet(self):
         notes_for_column = []
@@ -298,7 +298,7 @@ class GviaDaily(object):
     def order_columns(self, df):
         df = df[[u'צוות', u'שם לקוח', u'סוג לקוח', u'לקוח משפטי', u'תשלום ייעוץ חודשי', u'צפי לחודש',
                  u'תשלום ששולם עד היום לייעוץ', u'צפי שנותר', u'תשלום ששולם עד היום לגביה', u'הערות מגיליון הגביה',
-                 u'הערות משורת החיוב בסטטוס', u'תאריך לביצוע', u'אמצעי תשלום', u'תשובות לחני', u'הערות חני']]
+                 u'הערות משורת החיוב בסטטוס', u'תאריך לביצוע', u'אמצעי תשלום', u'תשובות לחני/אורטל', u'הערות לחני/אורטל']]
         return df
 
     def add_mid_sums(self, df):
@@ -342,8 +342,8 @@ class GviaDaily(object):
                                      u'הערות מגיליון הגביה': [""], u'הערות משורת החיוב בסטטוס': [""],
                                      u'תאריך לביצוע': [""],
                                      u'אמצעי תשלום': [""],
-                                     u'תשובות לחני': [""],
-                                     u'הערות חני': [""]})
+                                     u'תשובות לחני/אורטל': [""],
+                                     u'הערות לחני/אורטל': [""]})
         new_df = concat([df.ix[:last_index], new_sum_line, df.ix[last_index + 1:]]).reset_index(drop=True)
         new_df.sort_index()
         self.rows_of_sum.append(last_index + 1)
@@ -376,8 +376,8 @@ class GviaDaily(object):
                                      u'הערות מגיליון הגביה': [""], u'הערות משורת החיוב בסטטוס': [""],
                                      u'תאריך לביצוע': [""],
                                      u'אמצעי תשלום': [""],
-                                     u'תשובות לחני': [""],
-                                     u'הערות חני': [""]})
+                                     u'תשובות לחני/אורטל': [""],
+                                     u'הערות לחני/אורטל': [""]})
         new_df = concat([df, new_sum_line]).reset_index(drop=True)
         return new_df
 
@@ -534,4 +534,4 @@ if __name__ == '__main__':
                                    'report_for_hani')
     gvia_daily.create_report_for_each_team()
     gvia_daily.change_types_of_cells()
-    gvia_daily.send_mail_to_managers()
+    # gvia_daily.send_mail_to_managers()

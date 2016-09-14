@@ -83,7 +83,6 @@ class GviaDaily(object):
         AND ((agreementFinish = 0 OR (CustomerStatus != 2  AND taxesPay.taxsThisMonth = 1)))
         ORDER BY [צוות]'''.format(day=self.day, month=self.month, year=self.year)
         self.manager = EsgServiceManager()
-        print query
         # TODO: If you want to get report for different month(not the current) change file name below to the right file!
         month_report_file_name = u'תכנון הצפי לחודש {month}-{year}.xlsx'.format(month=self.chosen_date.month,
                                                                                 year=self.chosen_date.year)
@@ -108,7 +107,6 @@ class GviaDaily(object):
         self.df_from_month_report.index = range(len(self.df_from_month_report))
 
     def round_col_payment_for_month_consultation(self):
-        print self.df
         self.df[u'תשלום ייעוץ חודשי'] = self.df[u'תשלום ייעוץ חודשי'].apply(lambda x: round(x))
 
     def calc_month_tzefi(self):

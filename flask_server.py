@@ -45,7 +45,6 @@ def get_xl_file():
 @app.route('/api/v1/gvia-yadim-report/runDeparatmentReport/', methods=['POST'])
 def run_department_report():
     # try:
-    print "got here"
     day = int(request.form['day'])
     year = int(request.form['year'])
     month = int(request.form['month'])

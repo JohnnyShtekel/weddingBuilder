@@ -402,8 +402,7 @@ class TotalGviaDailyReport(object):
 
 
 if __name__ == '__main__':
-
-    chosen_date = datetime.datetime(2016,8,25)
+    chosen_date = datetime.datetime.now()
     gvia_teams = TotalGviaDailyReport(chosen_date, False)
     gvia_teams.add_col_team()
     gvia_teams.add_gvia_cols_for_3_kinds_of_customers()
@@ -418,7 +417,6 @@ if __name__ == '__main__':
     gvia_teams.add_row_for_yesum()
     gvia_teams.add_row_for_gvia()
     gvia_teams.order_columns()
-
     sf = StyleFrame(gvia_teams.df)
     writer = StyleFrame.ExcelWriter(u'דוח גביה יומי מחלקתי {day}-{month}-{year}.xlsx'.format(day=gvia_teams.chosen_date.day,
                                                                                        month=gvia_teams.chosen_date.month,

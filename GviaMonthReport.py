@@ -542,7 +542,7 @@ ORDER BY NameTeam'''.format(day=self.day, year=self.year, month=self.month)
 
 
 if __name__ == '__main__':
-    gvia_manager = GviaMonthReport(datetime.datetime(2016,8,25))
+    gvia_manager = GviaMonthReport(datetime.datetime.now())
     gvia_manager.subtract_vat()
     gvia_manager.add_col_tzefi_for_month(0)
     gvia_manager.add_col_additional_payments_for_month(0)

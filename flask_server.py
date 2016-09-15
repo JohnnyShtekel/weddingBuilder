@@ -5,10 +5,9 @@ import datetime
 from flask import Flask, request
 from flask import send_file
 from werkzeug.utils import secure_filename
-from GviaMonthReport import GviaMonthReport
-from gvia_daily_report import GviaDaily
-from TotalGviaDailyReport import TotalGviaDailyReport
 from file_mangaer import FileManager
+from gvia_daily_report_for_chosen_month import GviaDailyPerMonth
+from team_gvia_for_chosen_month import TeamGviaForMonth
 
 app = Flask(__name__, static_folder='static_gvia_yadim')
 app.config['UPLOAD_FOLDER'] = 'uploads/'
@@ -24,7 +23,7 @@ def multiple_routes(**kwargs):
 @app.route('/api/v1/gvia-yadim-report/download_report/<file_name>/')
 def download_report(file_name):
     try:
-        return  send_file(file_name)
+        return send_file(file_name)
     except:
         return json.dumps({'error': True}), 500, {'ContentType': 'application/json'}
 
@@ -50,22 +49,18 @@ def get_xl_file():
 
 
 
-@app.route('/api/v1/gvia-yadim-report/runDeparatmentReport/', methods=['POST'])
+@app.route('/api/v1/gvia-yadim-report/run_department_report/', methods=['POST'])
 def run_department_report():
-    try:
-        day = int(request.form['day'])
+    # try:
         year = int(request.form['year'])
         month = int(request.form['month'])
-        current_date = datetime.datetime(year, month, day)
-        gvia_month_report_handler = GviaMonthReport(current_date)
-        gvia_month_report_handler.run_gvia_monthly_report()
-        gvia_daily_report_handler = GviaDaily('report_for_hani', current_date, True)
-        gvia_daily_report_handler.run_daily_report()
-        gvia_total_report_handler = TotalGviaDailyReport(current_date, True)
-        report_name = gvia_total_report_handler.run_gvia_total_report()
-        return json.dumps({'file_name': report_name}), 200, {'ContentType': 'application/json'}
-    except Exception as e:
-        return json.dumps({'error': str(e)}, 500, {'ContentType': 'application/json'})
+        gvia_daily = GviaDailyPerMonth('report_for_hani', requested_year=year, requested_month=month)
+        gvia_daily.run_report()
+        gvia_team = TeamGviaForMonth(requested_month=month, requested_year=year)
+        report_file_name = gvia_team.run_report()
+        return json.dumps({'file_name': report_file_name}), 200, {'ContentType': 'application/json'}
+    # except Exception as e:
+    #     return json.dumps({'error': str(e)}, 500, {'ContentType': 'application/json'})
 
 
 

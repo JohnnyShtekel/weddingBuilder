@@ -42,8 +42,8 @@ class DailyDepartmentReport extends React.Component {
                         </div>
 
                          <span>בחר תאריך</span>
-                        <div class="input-field col s12">
-                           <input type="date" class="datepicker" id="datepicker"/>
+                        <div className="input-field col s12">
+                           <input type="date" className="datepicker" id="datepicker"/>
                         </div>
                         <div className="container fileInputContainer">
                             <div className="file-field input-field">

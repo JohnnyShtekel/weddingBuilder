@@ -26551,7 +26551,7 @@
 
 	    $.ajax({
 	        type: 'POST',
-	        url: '/api/v1/gvia-yadim-report/runDeparatmentReport/',
+	        url: '/api/v1/gvia-yadim-report/run_department_report/',
 	        data: form_data,
 	        contentType: false,
 	        cache: false,
@@ -26567,7 +26567,7 @@
 	            downloadRef.attr({
 	                href: '/api/v1/gvia-yadim-report/download_report/' + file_name + '/',
 	                target: '_blank',
-	                download: 'output.xlsx'
+	                download: file_name
 	            })[0].click();
 	        },
 	        error: function error(data) {
@@ -26789,8 +26789,8 @@
 	                        ),
 	                        _react2.default.createElement(
 	                            'div',
-	                            { 'class': 'input-field col s12' },
-	                            _react2.default.createElement('input', { type: 'date', 'class': 'datepicker', id: 'datepicker' })
+	                            { className: 'input-field col s12' },
+	                            _react2.default.createElement('input', { type: 'date', className: 'datepicker', id: 'datepicker' })
 	                        ),
 	                        _react2.default.createElement(
 	                            'div',

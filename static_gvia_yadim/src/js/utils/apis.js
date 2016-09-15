@@ -57,7 +57,7 @@ export function RunDepartmentReport(day, month, year) {
 
     $.ajax({
         type: 'POST',
-        url: '/api/v1/gvia-yadim-report/runDeparatmentReport/',
+        url: '/api/v1/gvia-yadim-report/run_department_report/',
         data: form_data,
         contentType: false,
         cache: false,
@@ -73,7 +73,7 @@ export function RunDepartmentReport(day, month, year) {
             downloadRef.attr({
                 href: '/api/v1/gvia-yadim-report/download_report/' + file_name + '/',
                 target: '_blank',
-                download: 'output.xlsx'
+                download: file_name
             })[0].click();
 
         },

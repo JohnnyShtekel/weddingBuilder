@@ -10,6 +10,14 @@ class WelcomePage extends React.Component {
     }
 
 
+    moveTorunDailyDepartmentReport(){
+        this.context.history.pushState(null, '/api/v1/gvia-yadim-report/department-report/');
+    }
+
+    moveToUploadPage(){
+        this.context.history.pushState(null, '/api/v1/gvia-yadim-report/upload-page/');
+    }
+
     render() {
 
         return (
@@ -22,9 +30,9 @@ class WelcomePage extends React.Component {
                         </div>
                         <div className="row">
                             <ul>
-                                <li><a href="#" className="round green">עדכוני גבייה<span className="round">עדכוני גבייה אוטומטים בעת הכנסת דו"ח יומי</span></a>
+                                <li><a onClick={this.moveToUploadPage.bind(this)} className="round green">עדכוני גבייה<span className="round">עדכוני גבייה אוטומטים בעת הכנסת דו"ח יומי</span></a>
                                 </li>
-                                <li><a href="#" className="round red">דו"ח מחלקתי<span className="round">הפקת דו"ח מחלקתי שמגיע גם למייל וגם לדפדפן</span></a>
+                                <li><a onClick={this.moveTorunDailyDepartmentReport.bind(this)} className="round red">דו"ח מחלקתי<span className="round">הפקת דו"ח מחלקתי שמגיע גם למייל וגם לדפדפן</span></a>
                                 </li>
                             </ul>
                         </div>
@@ -36,5 +44,8 @@ class WelcomePage extends React.Component {
     }
 }
 
+WelcomePage.contextTypes = {
+    history: React.PropTypes.object
+};
 
 export default WelcomePage

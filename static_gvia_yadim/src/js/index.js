@@ -1,24 +1,11 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-import { render } from 'react-dom';
-import App from '../js/components/entry'
-import Nav from '../js/components/nav'
-import DailyDepartmentReport from '../js/components/dailydepartmentreport'
-import WelcomePage from '../js/components/welcomepage'
+import ReactDOM from 'react-dom'
+import Root from '../js/routes';
+import createBrowserHistory from 'history/lib/createBrowserHistory';
 
 
-class Root extends React.Component {
+const history = createBrowserHistory();
 
+const app = document.getElementById('app');
 
-    render() {
-        return (
-            <div id="app-id">
-                <Nav/>
-                <App/>
-            </div>
-        );
-    }
-}
-
-
-ReactDOM.render(<Root/>, document.getElementById('app'));
+ReactDOM.render(<Root history={history}/>, app);

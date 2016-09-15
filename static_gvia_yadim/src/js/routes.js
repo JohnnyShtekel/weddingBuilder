@@ -1,11 +1,11 @@
 import React from 'react';
-import {Nav} from '../js/components/nav'
-import {UploadPage} from '../js/components/entry'
-import {WelcomePage} from '../js/components/welcomepage'
+import App from '../js/app'
+import UploadPage from '../js/components/entry'
+import WelcomePage from './components/welcomepage'
+import DailyDepartmentReport from './components/dailydepartmentreport'
 import Route from 'react-router/lib/Route';
 import IndexRoute from 'react-router/lib/IndexRoute';
 import Router from 'react-router/lib/Router';
-import {browserHistory} from 'react-router/lib/browserHistory'
 
 
 class Root extends React.Component {
@@ -17,11 +17,13 @@ class Root extends React.Component {
     }
 
     render() {
+        const {history} = this.props;
         return (
-            <Router history={browserHistory}>
-                <Route path="/api/v1/gvia-yadim-report/" component={Nav}>
+            <Router history={history}>
+                <Route path="/api/v1/gvia-yadim-report/" component={App}>
                     <IndexRoute component={WelcomePage}/>
                     <Route path="/api/v1/gvia-yadim-report/upload-page/" component={UploadPage}/>
+                    <Route path="/api/v1/gvia-yadim-report/department-report/" component={DailyDepartmentReport}/>
                 </Route>
             </Router>
         )

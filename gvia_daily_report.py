@@ -8,6 +8,7 @@ import numpy as np
 from pandas import concat
 from openpyxl import load_workbook
 from openpyxl.styles import Protection
+import os
 
 
 class GviaDaily(object):
@@ -521,13 +522,19 @@ class GviaDaily(object):
         if not self.for_previous_month:
             self.send_mail_to_managers()
 
+        self.remove_files()
+
+    def remove_files(self):
+        date_string = str(self.chosen_date.day) + '-' + str(self.chosen_date.month) + '-' + str(self.chosen_date.year)
+        files_to_delete = [filename for filename in os.listdir(os.getcwd()) if date_string in filename]
+        for filename in files_to_delete:
+            os.unlink(filename)
+
 
 if __name__ == '__main__':
-    current_date = datetime.datetime(2016,9,25)
     current_date = datetime.datetime.now()
     gvia_daily = GviaDaily('report_for_hani', current_date, False)
     gvia_daily.create_df()
-    # gvia_daily.change_rows_for_positive_test()
     gvia_daily.create_separated_df(u' דוח גביה יומי {day}-{month}-{year}.xlsx'.format(day=current_date.day,
                                                                                       month=current_date.month,
                                                                                       year=current_date.year),
@@ -535,3 +542,4 @@ if __name__ == '__main__':
     gvia_daily.create_report_for_each_team()
     gvia_daily.change_types_of_cells()
     gvia_daily.send_mail_to_managers()
+    gvia_daily.remove_files()

@@ -376,6 +376,13 @@ class TotalGviaDailyReport(object):
         return reportName
 
 
+
+    def remove_file(self):
+        reportName = u'דוח גביה יומי מחלקתי {day}-{month}-{year}.xlsx'.format(day=self.chosen_date.day,
+                                                                                                 month=self.chosen_date.month,
+                                                                                                 year=self.chosen_date.year)
+        os.unlink(reportName)
+
     def run_gvia_total_report(self):
         self.add_col_team()
         self.add_gvia_cols_for_3_kinds_of_customers()

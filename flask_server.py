@@ -31,7 +31,7 @@ def download_report(file_name):
 
 @app.route('/api/v1/gvia-yadim-report/upload/', methods=['POST'])
 def get_xl_file():
-    try:
+    # try:
         chosen_file = request.files['file']
         worker_name = request.form['worker']
         manager_name = request.form['manager']
@@ -43,8 +43,8 @@ def get_xl_file():
             return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
         else:
             return json.dumps({'error': True}), 500, {'ContentType': 'application/json'}
-    except Exception as e:
-        return json.dumps({'error': str(e)}), 500, {'ContentType': 'application/json'}
+    # except Exception as e:
+    #     return json.dumps({'error': str(e)}), 500, {'ContentType': 'application/json'}
 
 
 

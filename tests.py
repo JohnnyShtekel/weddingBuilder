@@ -1,5 +1,4 @@
 # coding=utf-8
-
 import pandas as pd
 from esg_services import EsgServiceManager
 
@@ -83,13 +82,20 @@ import numpy as np
 #             cell.protection = Protection(locked=True)
 # wb.save('total gvia.xlsx')
 # from esg_services import EsgServiceManager
-manager = EsgServiceManager()
-# print manager.db_service.search(query='select * from tblCustomers')
-
-query = '''SELECT NameCustomer, feeTeam, DatePay, feeTax
-        FROM dbo.tblCustomers LEFT JOIN dbo.tbltaxesPay
-          ON dbo.tbltaxesPay.KodCustomer = dbo.tblCustomers.KodCustomer
-          WHERE tblCustomers.KodCustomer = 2044'''
-q = manager.db_service.search(query=query)
-df = pd.DataFrame.from_records(q)
-df.to_excel("tt.xlsx")
+# manager = EsgServiceManager()
+# # print manager.db_service.search(query='select * from tblCustomers')
+#
+# query = '''SELECT NameCustomer, feeTeam, DatePay, feeTax
+#         FROM dbo.tblCustomers LEFT JOIN dbo.tbltaxesPay
+#           ON dbo.tbltaxesPay.KodCustomer = dbo.tblCustomers.KodCustomer
+#           WHERE tblCustomers.KodCustomer = 2044'''
+# q = manager.db_service.search(query=query)
+# df = pd.DataFrame.from_records(q)
+# df.to_excel("tt.xlsx")
+import os
+# import datetime
+# date = datetime.datetime.now()
+# date_string = str(date.day) + '-' + str(date.month) + '-' + str(date.year)
+# print date_string
+# list_of_files = [filename for filename in os.listdir(os.getcwd()) if date_string in filename]
+# print list_of_files
